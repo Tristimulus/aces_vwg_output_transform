@@ -1,0 +1,1921 @@
+set cut_paste_input [stack 0]
+version 13.0 v3
+push $cut_paste_input
+Group {
+ name DRT_ZCAM_IzMh_v02_Blink1
+ label "\[value colorspace_out]/\[value illuminant_out]/\[value primary_out]\n\[value ssts_luminance.2]Cd/sqm"
+ note_font "Bitstream Vera Sans"
+ selected true
+ xpos 3732
+ ypos -476
+ addUserKnob {20 User}
+ addUserKnob {26 div_input l Input}
+ addUserKnob {41 colorspace_in l colorspace T Colorspace1.colorspace_in}
+ addUserKnob {41 illuminant_in l "" -STARTLINE T Colorspace1.illuminant_in}
+ addUserKnob {41 primary_in l "" -STARTLINE T Colorspace1.primary_in}
+ addUserKnob {26 div_ssts l SSTS}
+ addUserKnob {78 ssts_luminance l luminance n 3}
+ ssts_luminance {0.0001 10 100}
+ addUserKnob {26 ssts_label l "" -STARTLINE T "  min / mid / peak"}
+ addUserKnob {26 div_gamutmap l "Gamut Mapping"}
+ addUserKnob {41 white T ZCAM_GamutBoundaryBlink1.boundaryWhite}
+ addUserKnob {41 gamut -STARTLINE T ZCAM_GamutBoundaryBlink1.boundaryGamut}
+ addUserKnob {78 compression n 3}
+ compression {0.8 1.3 1.2}
+ addUserKnob {26 compression_label l "" -STARTLINE T " threshold / limit / power"}
+ addUserKnob {3 lut_size_Iz l "LUT size Iz"}
+ lut_size_Iz 512
+ addUserKnob {3 lut_size_m l M -STARTLINE}
+ lut_size_m 512
+ addUserKnob {3 lut_size_h l h -STARTLINE}
+ lut_size_h 512
+ addUserKnob {26 lut_size_label l "" -STARTLINE T " (for gamut boundary)"}
+ addUserKnob {26 div_output l Output}
+ addUserKnob {41 colorspace_out l colorspace T Colorspace3.colorspace_out}
+ addUserKnob {41 illuminant_out l "" -STARTLINE T Colorspace3.illuminant_out}
+ addUserKnob {41 primary_out l "" -STARTLINE T Colorspace3.primary_out}
+ addUserKnob {41 viewingConditions_1 l viewingConditions T ZCAM_JMh_Blink1.viewingConditions}
+ addUserKnob {78 reference_luminance l "luminance reference" -STARTLINE n 1}
+ reference_luminance 100
+ addUserKnob {78 background_luminance l background -STARTLINE n 1}
+ background_luminance 10
+ addUserKnob {26 Blink}
+ addUserKnob {41 useGPUIfAvailable l "Use GPU if available" T ZCAM_JMh_Blink1.useGPUIfAvailable}
+}
+ BackdropNode {
+  inputs 0
+  name BackdropNode1
+  label "Generate\nGamut Boundary\n2D LUT"
+  note_font "Bitstream Vera Sans"
+  note_font_size 20
+  xpos -774
+  ypos -619
+  bdwidth 230
+  bdheight 747
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode2
+  label "Compress Colourfulness (M) to Target Gamut\n"
+  note_font "Bitstream Vera Sans"
+  note_font_size 20
+  xpos -1364
+  ypos -171
+  bdwidth 577
+  bdheight 299
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode3
+  label "Apply ACES SSTS to linearised Iz component\nand convert to J component"
+  note_font "Bitstream Vera Sans"
+  note_font_size 20
+  xpos -1366
+  ypos -619
+  bdwidth 579
+  bdheight 432
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode4
+  label "Input to IzMh (ZCAM)\n"
+  note_font "Bitstream Vera Sans"
+  note_font_size 20
+  xpos -1366
+  ypos -901
+  bdwidth 822
+  bdheight 269
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode5
+  label "IzMh (ZCAM) to Output\n"
+  note_font "Bitstream Vera Sans"
+  note_font_size 20
+  xpos -1363
+  ypos 141
+  bdwidth 822
+  bdheight 269
+ }
+ Constant {
+  inputs 0
+  format "256 256 0 0 256 256 1 square_256"
+  name Constant1
+  xpos -709
+  ypos -233
+ }
+ Reformat {
+  type "to box"
+  box_width {{MergeExpression1.lookupResolution.g}}
+  box_height {{MergeExpression1.lookupResolution.r}}
+  box_fixed true
+  resize distort
+  filter impulse
+  name Reformat1
+  label "To Lookup Resolution"
+  xpos -709
+  ypos -161
+ }
+ Expression {
+  temp_name0 vx
+  temp_expr0 x/(input.width-1)
+  temp_name1 vy
+  temp_expr1 y/(input.height-1)
+  expr0 vy
+  expr1 vx
+  expr2 1
+  expr3 0
+  name Expression1
+  label "Generate Ramps"
+  note_font "Bitstream Vera Sans"
+  xpos -709
+  ypos -123
+ }
+ Multiply {
+  channels rgb
+  value {{MergeExpression1.lookupNormJ} {MergeExpression1.lookupNormM} 1 1}
+  name Multiply3
+  label "Scale IzMh"
+  xpos -709
+  ypos -85
+ }
+ Group {
+  name ZCAM_GamutBoundaryBlink1
+  note_font "Bitstream Vera Sans"
+  xpos -709
+  ypos -47
+  addUserKnob {20 User}
+  addUserKnob {41 boundaryWhite -STARTLINE T XYZ_to_RGB.illuminant_out}
+  addUserKnob {41 boundaryGamut -STARTLINE T XYZ_to_RGB.primary_out}
+  addUserKnob {41 referenceWhite T RefWhite.illuminant_in}
+  addUserKnob {7 referenceLuminance -STARTLINE R 0 1000}
+  referenceLuminance {{parent.reference_luminance}}
+  addUserKnob {4 viewingConditions M {dark dim average}}
+  viewingConditions {{parent.ZCAM_JMh_Blink1.viewingConditions}}
+  addUserKnob {7 backgroundLuminance -STARTLINE R 0 100}
+  backgroundLuminance {{parent.background_luminance}}
+  addUserKnob {6 discountIlluminant +STARTLINE}
+  addUserKnob {26 Blink}
+  addUserKnob {41 useGPUIfAvailable l "Use GPU if available" T BlinkScript1.useGPUIfAvailable}
+ }
+  BackdropNode {
+   inputs 0
+   name BackdropNode1
+   label "Helper Nodes"
+   note_font "Bitstream Vera Sans"
+   note_font_size 20
+   xpos 991
+   ypos 100
+   bdwidth 275
+   bdheight 249
+  }
+  Constant {
+   inputs 0
+   format "3 1 0 0 3 1 1 3x1px"
+   name Constant1
+   label "3x1 px"
+   note_font "Bitstream Vera Sans"
+   xpos 1138
+   ypos 184
+  }
+  Expression {
+   expr0 "x == 0 ? 1 : 0"
+   expr1 "x == 1 ? 1 : 0"
+   expr2 "x == 2 ? 1 : 0"
+   name Expression1
+   label "RGB pix"
+   note_font "Bitstream Vera Sans"
+   xpos 1138
+   ypos 268
+  }
+  Colorspace {
+   colorspace_in CIE-XYZ
+   name XYZ_to_RGB
+   note_font "Bitstream Vera Sans"
+   xpos 1015
+   ypos 268
+  }
+  Input {
+   inputs 0
+   name Input1
+   xpos 828
+   ypos 71
+  }
+  Dot {
+   name Dot1
+   note_font "Bitstream Vera Sans"
+   xpos 862
+   ypos 153
+  }
+set N1ad0b800 [stack 0]
+  Shuffle2 {
+   fromInput1 {{0} B}
+   fromInput2 {{0} B}
+   mappings "4 white -1 -1 rgba.red 0 0 white -1 -1 rgba.green 0 1 white -1 -1 rgba.blue 0 2 white -1 -1 rgba.alpha 0 3"
+   name Shuffle1
+   label "\[value in]-->\[value out]"
+   note_font "Bitstream Vera Sans"
+   xpos 1015
+   ypos 143
+  }
+set N1ad0b400 [stack 0]
+  Colorspace {
+   colorspace_out CIE-XYZ
+   name D65White
+   note_font "Bitstream Vera Sans"
+   xpos 1015
+   ypos 243
+   addUserKnob {20 User}
+   addUserKnob {13 value}
+   value {{colormatrix.0+colormatrix.1+colormatrix.2} {colormatrix.3+colormatrix.4+colormatrix.5} {colormatrix.6+colormatrix.7+colormatrix.8}}
+  }
+push $N1ad0b400
+  Colorspace {
+   illuminant_in {{parent.parent.white}}
+   colorspace_out CIE-XYZ
+   name RefWhite
+   note_font "Bitstream Vera Sans"
+   xpos 1015
+   ypos 216
+   addUserKnob {20 User}
+   addUserKnob {13 value}
+   value {{"\[python nuke.thisNode().knob('colormatrix').getValue(0)\\ +\\ nuke.thisNode().knob('colormatrix').getValue(1)\\ +\\ nuke.thisNode().knob('colormatrix').getValue(2)]"} {"\[python nuke.thisNode().knob('colormatrix').getValue(3) + nuke.thisNode().knob('colormatrix').getValue(4) + nuke.thisNode().knob('colormatrix').getValue(5)]"} {"\[python nuke.thisNode().knob('colormatrix').getValue(6) + nuke.thisNode().knob('colormatrix').getValue(7) + nuke.thisNode().knob('colormatrix').getValue(8)]"}}
+  }
+push $N1ad0b800
+  BlinkScript {
+   inputs 4
+   recompileCount 88
+   ProgramGroup 1
+   KernelDescription "2 \"Gamut_Boundary_Kernel\" iterate pixelWise cf503d98e1b4794c93cdee546cfa4eb755a7cd7d748d10f356e0fdc036692d53 5 \"src\" Read Random \"refWhite\" Read Point \"d65White\" Read Point \"XYZtoRGB\" Read Random \"dst\" Write Random 10 \"referenceLuminance\" Float 1 AAAAAA== \"F\" Float 1 AAAAAA== \"F_s\" Float 1 AAAAAA== \"L_A\" Float 1 AAAAAA== \"F_b\" Float 1 AAAAAA== \"F_L\" Float 1 AAAAAA== \"adaptDegree\" Float 1 AAAAAA== \"CAT02_XYZ_to_LMS\" Float 9 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA \"ZCAM_XYZ_to_LMS\" Float 9 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA \"ZCAM_LMS_to_Izazbz\" Float 9 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 10 \"referenceLuminance\" 1 1 \"F\" 1 1 \"F_s\" 1 1 \"L_A\" 1 1 \"F_b\" 1 1 \"F_L\" 1 1 \"adaptDegree\" 1 1 \"CAT02_XYZ_to_LMS\" 9 1 \"ZCAM_XYZ_to_LMS\" 9 1 \"ZCAM_LMS_to_Izazbz\" 9 1 7 \"cb\" Float 1 1 AAAAAA== \"cg\" Float 1 1 AAAAAA== \"c1\" Float 1 1 AAAAAA== \"c2\" Float 1 1 AAAAAA== \"c3\" Float 1 1 AAAAAA== \"eta\" Float 1 1 AAAAAA== \"rho\" Float 1 1 AAAAAA=="
+   kernelSource "\nkernel Gamut_Boundary_Kernel : ImageComputationKernel<ePixelWise>\n\{\n  Image<eRead, eAccessRandom, eEdgeClamped> src; // the input image\n  Image<eRead, eAccessPoint, eEdgeClamped> refWhite; // reference white image\n  Image<eRead, eAccessPoint, eEdgeClamped> d65White; // D65 white image\n  Image<eRead, eAccessRandom, eEdgeClamped> XYZtoRGB; // RGB values of X, Y & Z to sample matrix values from\n  Image<eWrite, eAccessRandom> dst; // the output image\n\n  param:\n    float referenceLuminance;\n    float F;\n    float F_s;\n    float L_A;\n    float F_b;\n    float F_L;\n    float adaptDegree;\n    float3x3 CAT02_XYZ_to_LMS;\n    float3x3 ZCAM_XYZ_to_LMS;\n    float3x3 ZCAM_LMS_to_Izazbz;\n\n  local:\n    float cb;\n    float cg;\n    float c1;\n    float c2;\n    float c3;\n    float eta;\n    float rho;\n\n  void define()\n  \{\n\n  \}\n\n\n  void init()\n  \{\n    cb  = 1.15f;\n    cg  = 0.66f;\n    c1  = 3424.0f / pow(2.0f,12.0f);\n    c2  = 2413.0f / pow(2.0f, 7.0f);\n    c3  = 2392.0f / pow(2.0f, 7.0f);\n    eta = 2610.0f / pow(2.0f,14.0f);\n    rho = 1.7f * 2523.0f / pow(2.0f,5.0f);\n  \}\n\n\n  float3 vector_dot( float3x3 m, float3 v)\n  \{\n    float3 r = 1.0f;\n    for(int c = 0; c<3; c++)\n    \{\n      r\[c] = m\[c]\[0]*v.x + m\[c]\[1]*v.y + m\[c]\[2]*v.z;\n    \}\n\n    return r;\n  \}\n\n\n  float3 CAT_Zhai2018( float3 XYZ_b, float3 XYZ_wb, float3 XYZ_wd, float D_b, float D_d, float3x3 M)\n  \{\n    float3 XYZ_wo = 100.0f;\n    float3 RGB_b = vector_dot(M, XYZ_b);\n    float3 RGB_wb = vector_dot(M, XYZ_wb);\n    float3 RGB_wd = vector_dot(M, XYZ_wd);\n    float3 RGB_wo = vector_dot(M, XYZ_wo);\n    \n    float3 D_RGB_b = D_b * (XYZ_wb.y / XYZ_wo.y) * (RGB_wo / RGB_wb) + 1 - D_b;\n    float3 D_RGB_d = D_d * (XYZ_wd.y / XYZ_wo.y) * (RGB_wo / RGB_wd) + 1 - D_d;\n    float3 D_RGB = D_RGB_b / D_RGB_d;\n    \n    float3 RGB_d = D_RGB * RGB_b;\n    float3 XYZ_d = vector_dot(M.invert(), RGB_d);\n    \n    return XYZ_d;\n  \}\n\n\n  float3 XYZ_to_Izazbz( float3 XYZD65 )\n  \{\n    float3 XYZpD65 = XYZD65;\n    XYZpD65.x = cb * XYZD65.x - (cb - 1.0f) * XYZD65.z;\n    XYZpD65.y = cg * XYZD65.y - (cg - 1.0f) * XYZD65.x;\n    float3 LMS = vector_dot(ZCAM_XYZ_to_LMS, XYZpD65);\n    float3 LMSp = 0.0f;\n    LMSp.x = pow( ( c1 + c2 * pow((LMS.x/10000.0f),eta) ) / ( 1.0f + c3 * pow((LMS.x/10000.0f),eta) ), rho);\n    LMSp.y = pow( ( c1 + c2 * pow((LMS.y/10000.0f),eta) ) / ( 1.0f + c3 * pow((LMS.y/10000.0f),eta) ), rho);\n    LMSp.z = pow( ( c1 + c2 * pow((LMS.z/10000.0f),eta) ) / ( 1.0f + c3 * pow((LMS.z/10000.0f),eta) ), rho);\n    float3 Izazbz = vector_dot(ZCAM_LMS_to_Izazbz, LMSp);\n    return Izazbz;\n  \}\n\n\n  float degrees( float radians )\n  \{\n    return radians * 180.0f / PI;\n  \}\n\n\n  float radians( float degrees )\n  \{\n    return degrees / 180.0f * PI;\n  \}\n\n\n  float3 Izazbz_to_JMh( float3 Izazbz, float refWhiteIz )\n  \{\n    float3 JMh = 0.0f;\n\n    JMh.z = fmod(degrees(atan2(Izazbz.z,Izazbz.y))+360.0f,360.0f);\n    float ez = 1.015f + cos(radians(89.038f+JMh.z));\n    float Qz = 2700.0f * pow(Izazbz.x, (1.6f * F_s) / pow(F_b, 0.12f)) * pow(F_s, 2.2f) * pow(F_b, 0.5f) * pow(F_L, 0.2f);\n    float Qzw = 2700.0f * pow(refWhiteIz, (1.6f * F_s) / pow(F_b, 0.12f)) * pow(F_s, 2.2f) * pow(F_b, 0.5f) * pow(F_L, 0.2f);\n    JMh.x = 100.0f * (Qz / Qzw);\n    JMh.y = 100.0f * pow((pow(Izazbz.y, 2.0f) + pow(Izazbz.z, 2.0f)), 0.37f) * ((pow(ez, 0.068f) * pow(F_L, 0.2f)) / (pow(F_b, 0.1f) * pow(refWhiteIz, 0.78f)));\n\n    return JMh;\n  \}\n\n\n  float3 JMh_to_Izazbz( float3 JMh, float refWhiteIz)\n  \{\n    float Qzm = pow(F_s, 2.2f) * pow(F_b, 0.5f) * pow(F_L, 0.2f);\n    float Qzw = 2700.0f * pow(refWhiteIz, (1.6f * F_s) / pow(F_b, 0.12f)) * Qzm;\n    float Izp = pow(F_b, 0.12f) / (1.6f * F_s);\n    float Izd = 2700.0f * 100.0f * Qzm;\n    float ez = 1.015f + cos(radians(89.038f+JMh.z));\n    float hzr = radians(JMh.z);\n    float Czp = pow((JMh.y * pow(refWhiteIz, 0.78f) * pow(F_b, 0.1f)) / (100.0f * pow(ez, 0.068f) * pow(F_L, 0.2f)), 50.0f / 37.0f);\n\n    return float3( pow((JMh.x * Qzw) / Izd, Izp), Czp * cos(hzr), Czp * sin(hzr));\n  \}\n\n\n  float3 Izazbz_to_XYZ( float3 Izazbz )\n  \{\n    float3 LMSp = vector_dot(ZCAM_LMS_to_Izazbz.invert(), Izazbz);\n    float3 LMS = 0.0f;\n    LMS.x = 10000.0f*pow((c1-pow(LMSp.x,1.0f/rho)) / (c3*pow(LMSp.x,1.0f/rho)-c2),1.0f/eta);\n    LMS.y = 10000.0f*pow((c1-pow(LMSp.y,1.0f/rho)) / (c3*pow(LMSp.y,1.0f/rho)-c2),1.0f/eta);\n    LMS.z = 10000.0f*pow((c1-pow(LMSp.z,1.0f/rho)) / (c3*pow(LMSp.z,1.0f/rho)-c2),1.0f/eta);\n    float3 XYZpD65 = vector_dot(ZCAM_XYZ_to_LMS.invert(), LMS);\n    float3 XYZD65 = XYZpD65;\n    XYZD65.x = (XYZpD65.x+(cb-1.0f)*XYZpD65.z)/cb;\n    XYZD65.y = (XYZpD65.y+(cg-1.0f)*XYZD65.x)/cg;\n    return XYZD65;\n  \}\n\n\n  float3 ZCAM_JMh_to_XYZ( float3 JMh, float3 refWhite, float3 d65White )\n  \{\n    float3 refWhiteIzazbz = XYZ_to_Izazbz(refWhite*referenceLuminance/refWhite.y);\n    return CAT_Zhai2018(Izazbz_to_XYZ(JMh_to_Izazbz(JMh, refWhiteIzazbz.x)), d65White, refWhite, adaptDegree, adaptDegree, CAT02_XYZ_to_LMS);\n  \}\n\n\n  void process(int2 pos)\n  \{\n    // All the work will be done in the first pixel of each scanline.\n    if( pos.x != src.bounds.x1)\n    \{\n      return;\n    \}\n\n    SampleType(refWhite) inputRefWhite = refWhite();\n    SampleType(d65White) inputD65White = d65White();\n\n    float3x3 XYZ_to_RGB;\n    for( int x = 0; x < 3; x++)\n    \{\n      SampleType(XYZtoRGB) inputXYZtoRGB = XYZtoRGB(x,0);\n      XYZ_to_RGB\[0]\[x] = inputXYZtoRGB.x;\n      XYZ_to_RGB\[1]\[x] = inputXYZtoRGB.y;\n      XYZ_to_RGB\[2]\[x] = inputXYZtoRGB.z;\n    \}\n\n\n    int width = src.bounds.x2 - src.bounds.x1;\n\n    for( int x = src.bounds.x1; x < src.bounds.x2; x++)\n    \{\n      float J = 0.0f;\n      float maxM = 0.0f;\n      float h = float(x-src.bounds.x1)/float(width-1) * 360.0f;\n\n      for( int xx = src.bounds.x1; xx < src.bounds.x2; xx++)\n      \{\n        SampleType(src) input = src(xx, pos.y);\n        float3 JMh = float3(input.x, input.y, h);\n        J = JMh.x;\n        float3 XYZ = ZCAM_JMh_to_XYZ( JMh, float3(inputRefWhite.x, inputRefWhite.y, inputRefWhite.z), float3(inputD65White.x, inputD65White.y, inputD65White.z) );\n        // Luminance to Linear\n        XYZ = XYZ / 100.0f;\n        float3 RGB = vector_dot(XYZ_to_RGB, XYZ);\n\n        float minRGB = min(RGB.x, min(RGB.y, RGB.z));\n        float maxRGB = max(RGB.x, max(RGB.y, RGB.z));\n\n        if( minRGB >= 0.0f && maxRGB <= 1.0f )\n        \{\n          maxM = max(maxM, JMh.y);\n        \}\n      \}\n\n      float3 boundaryXYZ = ZCAM_JMh_to_XYZ( float3(J, maxM, h), float3(inputRefWhite.x, inputRefWhite.y, inputRefWhite.z), float3(inputD65White.x, inputD65White.y, inputD65White.z) );\n      float3 boundaryRGB = vector_dot(XYZ_to_RGB, boundaryXYZ);\n\n      \n      \n      \n      dst(x, pos.y) = float4(boundaryRGB.x, boundaryRGB.y, boundaryRGB.z, maxM); \n    \}\n  \}\n\};\n"
+   useGPUIfAvailable {{ZCAM_JMh_Blink1.useGPUIfAvailable}}
+   rebuild ""
+   Gamut_Boundary_Kernel_referenceLuminance {{parent.referenceLuminance}}
+   Gamut_Boundary_Kernel_F {{"\[python (0.8, 0.9, 1.0)\\\[\[numvalue viewingConditions]\\]]"}}
+   Gamut_Boundary_Kernel_F_s {{"\[python (0.525, 0.59, 0.69)\\\[\[numvalue viewingConditions]\\]]"}}
+   Gamut_Boundary_Kernel_L_A {{"referenceLuminance * backgroundLuminance / 100"}}
+   Gamut_Boundary_Kernel_F_b {{sqrt(backgroundLuminance/referenceLuminance)}}
+   Gamut_Boundary_Kernel_F_L {{"0.171*pow(Gamut_Boundary_Kernel_L_A, 1/3) * (1-exp(-48/9*Gamut_Boundary_Kernel_L_A))"}}
+   Gamut_Boundary_Kernel_adaptDegree {{"parent.discountIlluminant ? 1 : Gamut_Boundary_Kernel_F * (1 - (1 / 3.6) * exp((-Gamut_Boundary_Kernel_L_A - 42) / 92))"}}
+   Gamut_Boundary_Kernel_CAT02_XYZ_to_LMS {
+       {0.7328 0.4296 -0.1624}
+       {-0.7036 1.6975 0.0061}
+       {0.003 0.0136 0.9834}
+     }
+   Gamut_Boundary_Kernel_ZCAM_XYZ_to_LMS {
+       {0.41478972 0.579999 0.014648}
+       {-0.20151 1.120649 0.0531008}
+       {-0.0166008 0.2648 0.6684799}
+     }
+   Gamut_Boundary_Kernel_ZCAM_LMS_to_Izazbz {
+       {0 {1-epsilon} 0}
+       {3.524 -4.066708 0.542708}
+       {0.199076 1.096799 -1.295875}
+     }
+   rebuild_finalise ""
+   name BlinkScript1
+   note_font "Bitstream Vera Sans"
+   selected true
+   xpos 828
+   ypos 221
+   addUserKnob {20 User}
+   addUserKnob {7 epsilon}
+   epsilon 3.703522621e-11
+  }
+  Output {
+   name Output1
+   xpos 828
+   ypos 335
+  }
+ end_group
+ Input {
+  inputs 0
+  name Input
+  xpos -1154
+  ypos -853
+ }
+ Clamp {
+  channels rgb
+  minimum -65504
+  minimum_enable false
+  maximum 65504
+  name Clamp1
+  label "Clamp inf to\n+/-half max"
+  note_font "Bitstream Vera Sans"
+  xpos -1154
+  ypos -827
+ }
+ Colorspace {
+  illuminant_in ACES
+  primary_in ACES
+  colorspace_out CIE-XYZ
+  name Colorspace1
+  label "Input -> XYZ"
+  xpos -1154
+  ypos -777
+ }
+ Multiply {
+  channels rgb
+  value 100
+  name Multiply1
+  label "x100\nRel. Exp. to Cd/sqm"
+  xpos -1154
+  ypos -736
+  disable {{"Colorspace1.colorspace_in == 31"}}
+ }
+ Group {
+  name ZCAM_IzMh_Blink1
+  label "XYZ to IzMh"
+  note_font "Bitstream Vera Sans"
+  selected true
+  xpos -1154
+  ypos -686
+  addUserKnob {20 User}
+  addUserKnob {41 referenceWhite T RefWhite.illuminant_in}
+  addUserKnob {7 referenceLuminance -STARTLINE R 0 1000}
+  referenceLuminance {{parent.reference_luminance}}
+  addUserKnob {4 viewingConditions M {dark dim average}}
+  addUserKnob {7 backgroundLuminance -STARTLINE R 0 100}
+  backgroundLuminance {{parent.background_luminance}}
+  addUserKnob {6 discountIlluminant +STARTLINE}
+  addUserKnob {6 invert +STARTLINE}
+  addUserKnob {26 Blink}
+  addUserKnob {41 useGPUIfAvailable l "Use GPU if available" T BlinkScript1.useGPUIfAvailable}
+ }
+  BackdropNode {
+   inputs 0
+   name BackdropNode1
+   label "Helper Nodes"
+   note_font "Bitstream Vera Sans"
+   note_font_size 20
+   xpos 991
+   ypos 100
+   bdwidth 146
+   bdheight 250
+  }
+  Input {
+   inputs 0
+   name Input1
+   xpos 828
+   ypos 71
+  }
+  Dot {
+   name Dot1
+   note_font "Bitstream Vera Sans"
+   xpos 862
+   ypos 153
+  }
+set N1ad08800 [stack 0]
+  Shuffle2 {
+   fromInput1 {{0} B}
+   fromInput2 {{0} B}
+   mappings "4 white -1 -1 rgba.red 0 0 white -1 -1 rgba.green 0 1 white -1 -1 rgba.blue 0 2 white -1 -1 rgba.alpha 0 3"
+   name Shuffle1
+   label "\[value in]-->\[value out]"
+   note_font "Bitstream Vera Sans"
+   xpos 1015
+   ypos 143
+  }
+set N1ad08400 [stack 0]
+  Colorspace {
+   colorspace_out CIE-XYZ
+   name D65White
+   note_font "Bitstream Vera Sans"
+   xpos 1015
+   ypos 243
+   addUserKnob {20 User}
+   addUserKnob {13 value}
+   value {{colormatrix.0+colormatrix.1+colormatrix.2} {colormatrix.3+colormatrix.4+colormatrix.5} {colormatrix.6+colormatrix.7+colormatrix.8}}
+  }
+push $N1ad08400
+  Colorspace {
+   illuminant_in {{parent.parent.illuminant_in}}
+   colorspace_out CIE-XYZ
+   name RefWhite
+   note_font "Bitstream Vera Sans"
+   xpos 1015
+   ypos 216
+   addUserKnob {20 User}
+   addUserKnob {13 value}
+   value {{"\[python nuke.thisNode().knob('colormatrix').getValue(0)\\ +\\ nuke.thisNode().knob('colormatrix').getValue(1)\\ +\\ nuke.thisNode().knob('colormatrix').getValue(2)]"} {"\[python nuke.thisNode().knob('colormatrix').getValue(3) + nuke.thisNode().knob('colormatrix').getValue(4) + nuke.thisNode().knob('colormatrix').getValue(5)]"} {"\[python nuke.thisNode().knob('colormatrix').getValue(6) + nuke.thisNode().knob('colormatrix').getValue(7) + nuke.thisNode().knob('colormatrix').getValue(8)]"}}
+  }
+push $N1ad08800
+  BlinkScript {
+   inputs 3
+   recompileCount 69
+   ProgramGroup 1
+   KernelDescription "2 \"ZCAM_JMh_Kernel\" iterate pixelWise 7a6b681048dc899573cfa509e7d53e05469125c187c95579679329797bfbd64a 4 \"src\" Read Point \"refWhite\" Read Point \"d65White\" Read Point \"dst\" Write Point 11 \"direction\" Int 1 AAAAAA== \"referenceLuminance\" Float 1 AAAAAA== \"F\" Float 1 AAAAAA== \"F_s\" Float 1 AAAAAA== \"L_A\" Float 1 AAAAAA== \"F_b\" Float 1 AAAAAA== \"F_L\" Float 1 AAAAAA== \"adaptDegree\" Float 1 AAAAAA== \"CAT02_XYZ_to_LMS\" Float 9 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA \"ZCAM_XYZ_to_LMS\" Float 9 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA \"ZCAM_LMS_to_Izazbz\" Float 9 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 11 \"direction\" 1 1 \"referenceLuminance\" 1 1 \"F\" 1 1 \"F_s\" 1 1 \"L_A\" 1 1 \"F_b\" 1 1 \"F_L\" 1 1 \"adaptDegree\" 1 1 \"CAT02_XYZ_to_LMS\" 9 1 \"ZCAM_XYZ_to_LMS\" 9 1 \"ZCAM_LMS_to_Izazbz\" 9 1 7 \"cb\" Float 1 1 AAAAAA== \"cg\" Float 1 1 AAAAAA== \"c1\" Float 1 1 AAAAAA== \"c2\" Float 1 1 AAAAAA== \"c3\" Float 1 1 AAAAAA== \"eta\" Float 1 1 AAAAAA== \"rho\" Float 1 1 AAAAAA=="
+   kernelSource "\nkernel ZCAM_JMh_Kernel : ImageComputationKernel<ePixelWise>\n\{\n  Image<eRead, eAccessPoint, eEdgeClamped> src; // the input image\n  Image<eRead, eAccessPoint, eEdgeClamped> refWhite; // reference white image\n  Image<eRead, eAccessPoint, eEdgeClamped> d65White; // D65 white image\n  Image<eWrite> dst; // the output image\n\n  param:\n    int direction;\n    float referenceLuminance;\n    float F;\n    float F_s;\n    float L_A;\n    float F_b;\n    float F_L;\n    float adaptDegree;\n    float3x3 CAT02_XYZ_to_LMS;\n    float3x3 ZCAM_XYZ_to_LMS;\n    float3x3 ZCAM_LMS_to_Izazbz;\n\n  local:\n    float cb;\n    float cg;\n    float c1;\n    float c2;\n    float c3;\n    float eta;\n    float rho;\n\n\n  void define()\n  \{\n\n  \}\n\n\n  void init()\n  \{\n    cb  = 1.15f;\n    cg  = 0.66f;\n    c1  = 3424.0f / pow(2.0f,12.0f);\n    c2  = 2413.0f / pow(2.0f, 7.0f);\n    c3  = 2392.0f / pow(2.0f, 7.0f);\n    eta = 2610.0f / pow(2.0f,14.0f);\n    rho = 1.7f * 2523.0f / pow(2.0f,5.0f);\n  \}\n\n\n  float3 vector_dot( float3x3 m, float3 v)\n  \{\n    float3 r = 1.0f;\n    for(int c = 0; c<3; c++)\n    \{\n      r\[c] = m\[c]\[0]*v.x + m\[c]\[1]*v.y + m\[c]\[2]*v.z;\n    \}\n\n    return r;\n  \}\n\n\n  float3 CAT_Zhai2018( float3 XYZ_b, float3 XYZ_wb, float3 XYZ_wd, float D_b, float D_d, float3x3 M)\n  \{\n    float3 XYZ_wo = 100.0f;\n    float3 RGB_b = vector_dot(M, XYZ_b);\n    float3 RGB_wb = vector_dot(M, XYZ_wb);\n    float3 RGB_wd = vector_dot(M, XYZ_wd);\n    float3 RGB_wo = vector_dot(M, XYZ_wo);\n    \n    float3 D_RGB_b = D_b * (XYZ_wb.y / XYZ_wo.y) * (RGB_wo / RGB_wb) + 1 - D_b;\n    float3 D_RGB_d = D_d * (XYZ_wd.y / XYZ_wo.y) * (RGB_wo / RGB_wd) + 1 - D_d;\n    float3 D_RGB = D_RGB_b / D_RGB_d;\n    \n    float3 RGB_d = D_RGB * RGB_b;\n    float3 XYZ_d = vector_dot(M.invert(), RGB_d);\n    \n    return XYZ_d;\n  \}\n\n\n  float3 XYZ_to_Izazbz( float3 XYZD65 )\n  \{\n    float3 XYZpD65 = XYZD65;\n    XYZpD65.x = cb * XYZD65.x - (cb - 1.0f) * XYZD65.z;\n    XYZpD65.y = cg * XYZD65.y - (cg - 1.0f) * XYZD65.x;\n    float3 LMS = vector_dot(ZCAM_XYZ_to_LMS, XYZpD65);\n    float3 LMSp = 0.0f;\n    LMSp.x = pow( ( c1 + c2 * pow((LMS.x/10000.0f),eta) ) / ( 1.0f + c3 * pow((LMS.x/10000.0f),eta) ), rho);\n    LMSp.y = pow( ( c1 + c2 * pow((LMS.y/10000.0f),eta) ) / ( 1.0f + c3 * pow((LMS.y/10000.0f),eta) ), rho);\n    LMSp.z = pow( ( c1 + c2 * pow((LMS.z/10000.0f),eta) ) / ( 1.0f + c3 * pow((LMS.z/10000.0f),eta) ), rho);\n    float3 Izazbz = vector_dot(ZCAM_LMS_to_Izazbz, LMSp);\n    return Izazbz;\n  \}\n\n\n  float degrees( float radians )\n  \{\n    return radians * 180.0f / PI;\n  \}\n\n\n  float radians( float degrees )\n  \{\n    return degrees / 180.0f * PI;\n  \}\n\n\n  float3 Izazbz_to_IzMh( float3 Izazbz, float refWhiteIz )\n  \{\n    float3 IzMh = 0.0f;\n\n    IzMh.z = fmod(degrees(atan2(Izazbz.z,Izazbz.y))+360.0f,360.0f);\n    float ez = 1.015f + cos(radians(89.038f+IzMh.z));\n    IzMh.x = Izazbz.x;\n    IzMh.y = 100.0f * pow((pow(Izazbz.y, 2.0f) + pow(Izazbz.z, 2.0f)), 0.37f) * ((pow(ez, 0.068f) * pow(F_L, 0.2f)) / (pow(F_b, 0.1f) * pow(refWhiteIz, 0.78f)));\n\n    return IzMh;\n  \}\n\n\n  float3 IzMh_to_Izazbz( float3 IzMh, float refWhiteIz)\n  \{\n    float ez = 1.015f + cos(radians(89.038f+IzMh.z));\n    float hzr = radians(IzMh.z);\n    float Czp = pow((IzMh.y * pow(refWhiteIz, 0.78f) * pow(F_b, 0.1f)) / (100.0f * pow(ez, 0.068f) * pow(F_L, 0.2f)), 50.0f / 37.0f);\n\n    return float3( IzMh.x, Czp * cos(hzr), Czp * sin(hzr));\n  \}\n\n\n  float3 Izazbz_to_XYZ( float3 Izazbz )\n  \{\n    float3 LMSp = vector_dot(ZCAM_LMS_to_Izazbz.invert(), Izazbz);\n    float3 LMS = 0.0f;\n    LMS.x = 10000.0f*pow((c1-pow(LMSp.x,1.0f/rho)) / (c3*pow(LMSp.x,1.0f/rho)-c2),1.0f/eta);\n    LMS.y = 10000.0f*pow((c1-pow(LMSp.y,1.0f/rho)) / (c3*pow(LMSp.y,1.0f/rho)-c2),1.0f/eta);\n    LMS.z = 10000.0f*pow((c1-pow(LMSp.z,1.0f/rho)) / (c3*pow(LMSp.z,1.0f/rho)-c2),1.0f/eta);\n    float3 XYZpD65 = vector_dot(ZCAM_XYZ_to_LMS.invert(), LMS);\n    float3 XYZD65 = XYZpD65;\n    XYZD65.x = (XYZpD65.x+(cb-1.0f)*XYZpD65.z)/cb;\n    XYZD65.y = (XYZpD65.y+(cg-1.0f)*XYZD65.x)/cg;\n    return XYZD65;\n  \}\n\n\n  float3 XYZ_to_ZCAM_IzMh( float3 XYZ, float3 refWhite, float3 d65White )\n  \{\n    float3 refWhiteIzazbz = XYZ_to_Izazbz(refWhite*referenceLuminance/refWhite.y);\n    return Izazbz_to_IzMh(XYZ_to_Izazbz(CAT_Zhai2018(XYZ, refWhite, d65White, adaptDegree, adaptDegree, CAT02_XYZ_to_LMS)), refWhiteIzazbz.x);\n  \}\n\n\n  float3 ZCAM_IzMh_to_XYZ( float3 JMh, float3 refWhite, float3 d65White )\n  \{\n    float3 refWhiteIzazbz = XYZ_to_Izazbz(refWhite*referenceLuminance/refWhite.y);\n    return CAT_Zhai2018(Izazbz_to_XYZ(IzMh_to_Izazbz(JMh, refWhiteIzazbz.x)), d65White, refWhite, adaptDegree, adaptDegree, CAT02_XYZ_to_LMS);\n  \}\n\n\n  void process()\n  \{\n    SampleType(src) input = src();\n    SampleType(refWhite) inputRefWhite = refWhite();\n    SampleType(d65White) inputD65White = d65White();\n\n    float3 output = 0.0f;\n\n    if( direction == 0 )\n    \{\n      output = XYZ_to_ZCAM_IzMh(float3(input.x, input.y, input.z), float3(inputRefWhite.x, inputRefWhite.y, inputRefWhite.z), float3(inputD65White.x, inputD65White.y, inputD65White.z));\n    \}\n    else\n    \{\n       output = ZCAM_IzMh_to_XYZ(float3(input.x, input.y, input.z), float3(inputRefWhite.x, inputRefWhite.y, inputRefWhite.z), float3(inputD65White.x, inputD65White.y, inputD65White.z));\n    \}\n\n    dst() = float4(output.x, output.y, output.z, input.w);\n  \}\n\};\n"
+   useGPUIfAvailable {{ZCAM_JMh_Blink1.useGPUIfAvailable}}
+   rebuild ""
+   ZCAM_JMh_Kernel_direction {{parent.invert}}
+   ZCAM_JMh_Kernel_referenceLuminance {{parent.referenceLuminance}}
+   ZCAM_JMh_Kernel_F {{"\[python (0.8, 0.9, 1.0)\\\[\[numvalue viewingConditions]\\]]"}}
+   ZCAM_JMh_Kernel_F_s {{"\[python (0.525, 0.59, 0.69)\\\[\[numvalue viewingConditions]\\]]"}}
+   ZCAM_JMh_Kernel_L_A {{"referenceLuminance * backgroundLuminance / 100"}}
+   ZCAM_JMh_Kernel_F_b {{sqrt(backgroundLuminance/referenceLuminance)}}
+   ZCAM_JMh_Kernel_F_L {{"0.171*pow(ZCAM_JMh_Kernel_L_A, 1/3) * (1-exp(-48/9*ZCAM_JMh_Kernel_L_A))"}}
+   ZCAM_JMh_Kernel_adaptDegree {{"parent.discountIlluminant ? 1 : ZCAM_JMh_Kernel_F * (1 - (1 / 3.6) * exp((-ZCAM_JMh_Kernel_L_A - 42) / 92))"}}
+   ZCAM_JMh_Kernel_CAT02_XYZ_to_LMS {
+       {0.7328 0.4296 -0.1624}
+       {-0.7036 1.6975 0.0061}
+       {0.003 0.0136 0.9834}
+     }
+   ZCAM_JMh_Kernel_ZCAM_XYZ_to_LMS {
+       {0.41478972 0.579999 0.014648}
+       {-0.20151 1.120649 0.0531008}
+       {-0.0166008 0.2648 0.6684799}
+     }
+   ZCAM_JMh_Kernel_ZCAM_LMS_to_Izazbz {
+       {0 {1-epsilon} 0}
+       {3.524 -4.066708 0.542708}
+       {0.199076 1.096799 -1.295875}
+     }
+   rebuild_finalise ""
+   name BlinkScript1
+   note_font "Bitstream Vera Sans"
+   selected true
+   xpos 828
+   ypos 221
+   addUserKnob {20 User}
+   addUserKnob {7 epsilon}
+   epsilon 3.703522621e-11
+  }
+  Output {
+   name Output1
+   xpos 828
+   ypos 335
+  }
+ end_group
+ Dot {
+  name Dot5
+  note_font "Bitstream Vera Sans"
+  xpos -1120
+  ypos -457
+ }
+set N1aca6c00 [stack 0]
+ Group {
+  name st2048_1
+  label "PQ (ZCAM) to Lum"
+  xpos -1296
+  ypos -466
+  addUserKnob {20 User}
+  addUserKnob {4 direction M {"Luminance (Cd/sqm) -> ST.2048" "ST.2048 -> Luminance (Cd/sqm)"}}
+  direction "ST.2048 -> Luminance (Cd/sqm)"
+  addUserKnob {7 peakLuminance R 0 10000}
+  peakLuminance 10000
+  addUserKnob {26 ""}
+  addUserKnob {26 m2_override_desc l "" +STARTLINE T "ZCAM uses a different exponent (rho) in its PQ function than ST.2084 (m2)"}
+  addUserKnob {7 m2_override R 0 200}
+  m2_override {{"1.7 * 2523 / pow(2,5)"}}
+ }
+  Input {
+   inputs 0
+   name Input1
+   xpos 829
+   ypos 200
+  }
+  Dot {
+   name Dot17
+   xpos 863
+   ypos 240
+  }
+set N1aca6400 [stack 0]
+  Dot {
+   name Dot27
+   xpos 916
+   ypos 240
+  }
+  Expression {
+   temp_name0 V_pr
+   temp_expr0 "pow(r, 1/m_2)"
+   temp_name1 V_pg
+   temp_expr1 "pow(g, 1/m_2)"
+   temp_name2 V_pb
+   temp_expr2 "pow(b, 1/m_2)"
+   expr0 "pow((max(0.0, V_pr - c_1) / (c_2 - c_3 * V_pr)), 1/m_1)*L_p"
+   expr1 "pow((max(0.0, V_pg - c_1) / (c_2 - c_3 * V_pg)), 1/m_1)*L_p"
+   expr2 "pow((max(0.0, V_pb - c_1) / (c_2 - c_3 * V_pb)), 1/m_1)*L_p"
+   channel3 none
+   name from_st2048
+   selected true
+   xpos 882
+   ypos 285
+   addUserKnob {20 User}
+   addUserKnob {7 m_1}
+   m_1 {{"2610 / 4096 * (1 / 4)"}}
+   addUserKnob {7 m_2}
+   m_2 {{parent.m2_override}}
+   addUserKnob {7 c_1}
+   c_1 {{"3424 / 4096"}}
+   addUserKnob {7 c_2}
+   c_2 {{"2413 / 4096 * 32"}}
+   addUserKnob {7 c_3}
+   c_3 {{"2392 / 4096 * 32"}}
+   addUserKnob {7 L_p R 0 10000}
+   L_p {{parent.peakLuminance}}
+  }
+push $N1aca6400
+  Dot {
+   name Dot26
+   xpos 810
+   ypos 240
+  }
+  Expression {
+   temp_name0 Y_pr
+   temp_expr0 "pow(r / L_p, m_1)"
+   temp_name1 Y_pg
+   temp_expr1 "pow(g / L_p, m_1)"
+   temp_name2 Y_pb
+   temp_expr2 "pow(b / L_p, m_1)"
+   expr0 "pow((c_1 + c_2 * Y_pr) / (c_3 * Y_pr + 1), m_2)"
+   expr1 "pow((c_1 + c_2 * Y_pg) / (c_3 * Y_pg + 1), m_2)"
+   expr2 "pow((c_1 + c_2 * Y_pb) / (c_3 * Y_pb + 1), m_2)"
+   channel3 none
+   name to_st2084
+   xpos 776
+   ypos 286
+   addUserKnob {20 User}
+   addUserKnob {7 m_1}
+   m_1 {{"2610 / 4096 * (1 / 4)"}}
+   addUserKnob {7 m_2}
+   m_2 {{parent.m2_override}}
+   addUserKnob {7 c_1}
+   c_1 {{"3424 / 4096"}}
+   addUserKnob {7 c_2}
+   c_2 {{"2413 / 4096 * 32"}}
+   addUserKnob {7 c_3}
+   c_3 {{"2392 / 4096 * 32"}}
+   addUserKnob {7 L_p R 0 10000}
+   L_p {{parent.peakLuminance}}
+  }
+  Switch {
+   inputs 2
+   which {{parent.direction}}
+   name Switch2
+   xpos 835
+   ypos 347
+  }
+  Output {
+   name Output1
+   xpos 835
+   ypos 447
+  }
+ end_group
+ Multiply {
+  channels rgb
+  value 0.01
+  name Multiply2
+  label "1/100\nLum to Exp"
+  note_font "Bitstream Vera Sans"
+  xpos -1296
+  ypos -428
+ }
+ Group {
+  name SSTS_1
+  note_font "Bitstream Vera Sans"
+  xpos -1296
+  ypos -378
+  addUserKnob {20 User}
+  addUserKnob {13 luminance}
+  luminance {{parent.ssts_luminance.0} {parent.ssts_luminance.1} {parent.ssts_luminance.2}}
+  addUserKnob {20 TsParams}
+  addUserKnob {7 expShift R -10 10}
+  addUserKnob {13 TsPointMin}
+  TsPointMin {{pow(2.,(log(MIN_PT.x)/log(2)-expShift))} {MIN_PT.y} {MIN_PT.z}}
+  addUserKnob {13 TsPointMid}
+  TsPointMid {{pow(2.,(log(0.18)/log(2)-expShift))} {MID_PT.y} {MID_PT.z}}
+  addUserKnob {13 TsPointMax}
+  TsPointMax {{pow(2.,(log(MAX_PT.x)/log(2)-expShift))} {MAX_PT.y} {MAX_PT.z}}
+  addUserKnob {78 coefsLow n 6}
+  coefsLow {{"(MIN_PT.z * (log10(MIN_PT.x)-0.5*knotIncLow)) + ( log10(MIN_PT.y) - MIN_PT.z * log10(MIN_PT.x))"} {"(MIN_PT.z * (log10(MIN_PT.x)+0.5*knotIncLow)) + ( log10(MIN_PT.y) - MIN_PT.z * log10(MIN_PT.x))"} {"log10(MIN_PT.y) + pctLow*(log10(MID_PT.y)-log10(MIN_PT.y))"} {"(MID_PT.z * (log10(MID_PT.x)-0.5*knotIncLow)) + ( log10(MID_PT.y) - MID_PT.z * log10(MID_PT.x))"} {"(MID_PT.z * (log10(MID_PT.x)+0.5*knotIncLow)) + ( log10(MID_PT.y) - MID_PT.z * log10(MID_PT.x))"} {coefsLow.4}}
+  addUserKnob {78 coefsHigh n 6}
+  coefsHigh {{"(MID_PT.z * (log10(MID_PT.x)-0.5*knotIncHigh)) + ( log10(MID_PT.y) - MID_PT.z * log10(MID_PT.x))"} {"(MID_PT.z * (log10(MID_PT.x)+0.5*knotIncHigh)) + ( log10(MID_PT.y) - MID_PT.z * log10(MID_PT.x))"} {"log10(MID_PT.y) + pctHigh*(log10(MAX_PT.y)-log10(MID_PT.y))"} {"(MAX_PT.z * (log10(MAX_PT.x)-0.5*knotIncHigh)) + ( log10(MAX_PT.y) - MAX_PT.z * log10(MAX_PT.x))"} {"(MAX_PT.z * (log10(MAX_PT.x)+0.5*knotIncHigh)) + ( log10(MAX_PT.y) - MAX_PT.z * log10(MAX_PT.x))"} {coefsHigh.4}}
+  addUserKnob {20 Constants}
+  addUserKnob {7 MIN_STOP_SDR R -10 10}
+  MIN_STOP_SDR -6.5
+  addUserKnob {7 MAX_STOP_SDR R -10 10}
+  MAX_STOP_SDR 6.5
+  addUserKnob {7 MIN_STOP_RRT R -20 20}
+  MIN_STOP_RRT -15
+  addUserKnob {7 MAX_STOP_RRT R -20 20}
+  MAX_STOP_RRT 18
+  addUserKnob {7 MIN_LUM_SDR}
+  MIN_LUM_SDR 0.02
+  addUserKnob {7 MAX_LUM_SDR R 0 100}
+  MAX_LUM_SDR 48
+  addUserKnob {7 MIN_LUM_RRT}
+  MIN_LUM_RRT 0.0001
+  addUserKnob {7 MAX_LUM_RRT R 0 10000}
+  MAX_LUM_RRT 10000
+  addUserKnob {3 N_KNOTS_LOW}
+  N_KNOTS_LOW 4
+  addUserKnob {3 N_KNOTS_HIGH}
+  N_KNOTS_HIGH 4
+  addUserKnob {20 TsParamsVars}
+  addUserKnob {13 MIN_PT}
+  MIN_PT {{0.18*pow(2,minTable(log10(luminance.x)))} {luminance.x} 0}
+  addUserKnob {13 MID_PT}
+  MID_PT {0.18 {luminance.y} 1.55}
+  addUserKnob {13 MAX_PT}
+  MAX_PT {{0.18*pow(2,maxTable(log10(luminance.z)))} {luminance.z} 0}
+  addUserKnob {7 knotIncLow}
+  knotIncLow {{"(log10(MID_PT.x) - log10(MIN_PT.x)) / 3"}}
+  addUserKnob {7 knotIncHigh}
+  knotIncHigh {{"(log10(MAX_PT.x) - log10(MID_PT.x)) / 3"}}
+  addUserKnob {7 pctLow}
+  pctLow {{bendsLow(log(MIN_PT.x/0.18)/log(2))}}
+  addUserKnob {7 pctHigh}
+  pctHigh {{bendsHigh(log(MAX_PT.x/0.18)/log(2))}}
+  addUserKnob {20 Tables}
+  addUserKnob {7 minTable}
+  minTable {{curve L l x-4 -15 x-1.69896996 -6.5}}
+  addUserKnob {7 maxTable}
+  maxTable {{curve x1.681241274 6.5 x4 18}}
+  addUserKnob {7 bendsLow}
+  bendsLow {{curve L l x-15 0.18 x-6.5 0.35}}
+  addUserKnob {7 bendsHigh}
+  bendsHigh {{curve l x6.5 0.89 x18 0.9}}
+ }
+  Input {
+   inputs 0
+   name Input1
+   xpos 420
+   ypos -177
+  }
+  Dot {
+   name Dot25
+   label " "
+   xpos 454
+   ypos 111
+  }
+set N1ac3fc00 [stack 0]
+  Dot {
+   name Dot26
+   label " "
+   xpos 454
+   ypos 1935
+  }
+push $N1ac3fc00
+  Dot {
+   name Dot4
+   label " "
+   xpos 564
+   ypos 111
+  }
+set N1ac3f400 [stack 0]
+  Dot {
+   name Dot5
+   label " "
+   xpos 674
+   ypos 111
+  }
+set N1ac3f000 [stack 0]
+  Dot {
+   name Dot2
+   label " "
+   xpos 784
+   ypos 111
+  }
+set N1ac3ec00 [stack 0]
+  Dot {
+   name Dot3
+   label " "
+   xpos 894
+   ypos 111
+  }
+set N1ac3e800 [stack 0]
+  Expression {
+   temp_name0 logr
+   temp_expr0 "log10( max(r, 5.96046448e-08 ))"
+   temp_name1 logg
+   temp_expr1 "log10( max(g, 5.96046448e-08 ))"
+   temp_name2 logb
+   temp_expr2 "log10( max(b, 5.96046448e-08 ))"
+   expr0 "logr <= log10(parent.TsPointMin.x)"
+   expr1 "logg <= log10(parent.TsPointMin.x)"
+   expr2 "logb <= log10(parent.TsPointMin.x)"
+   name segment_bottom
+   xpos 860
+   ypos 251
+  }
+  Dot {
+   name Dot1
+   label " "
+   xpos 894
+   ypos 591
+  }
+push $N1ac3e800
+  Dot {
+   name Dot7
+   label " "
+   xpos 1114
+   ypos 111
+  }
+set N1ac3dc00 [stack 0]
+  Expression {
+   temp_name0 logr
+   temp_expr0 "log10( max(r, 5.96046448e-08 ))"
+   temp_name1 logg
+   temp_expr1 "log10( max(g, 5.96046448e-08 ))"
+   temp_name2 logb
+   temp_expr2 "log10( max(b, 5.96046448e-08 ))"
+   channel0 {rgba.red -rgba.green -rgba.blue none}
+   expr0 "logr * parent.TsPointMin.z + ( log10(parent.TsPointMin.y) - parent.TsPointMin.z * log10(parent.TsPointMin.x) )"
+   expr1 "logg * parent.TsPointMin.z + ( log10(parent.TsPointMin.y) - parent.TsPointMin.z * log10(parent.TsPointMin.x) )"
+   expr2 "logb* parent.TsPointMin.z + ( log10(parent.TsPointMin.y) - parent.TsPointMin.z * log10(parent.TsPointMin.x) )"
+   expr3 1
+   name Expression
+   xpos 1080
+   ypos 251
+  }
+  Merge2 {
+   inputs 2
+   operation multiply
+   also_merge all
+   name Multiply3
+   xpos 1080
+   ypos 587
+  }
+  Dot {
+   name Dot27
+   label " "
+   xpos 1114
+   ypos 1215
+  }
+push $N1ac3ec00
+  Expression {
+   temp_name0 logr
+   temp_expr0 "log10( max(r, 5.96046448e-08 ))"
+   temp_name1 logg
+   temp_expr1 "log10( max(g, 5.96046448e-08 ))"
+   temp_name2 logb
+   temp_expr2 "log10( max(b, 5.96046448e-08 ))"
+   expr0 "( logr > log10(parent.TsPointMin.x) ) * ( logr < log10(parent.TsPointMid.x) )"
+   expr1 "( logg > log10(parent.TsPointMin.x) ) * ( logg < log10(parent.TsPointMid.x) )"
+   expr2 "( logb > log10(parent.TsPointMin.x) ) * ( logb < log10(parent.TsPointMid.x) )"
+   name segment_low
+   xpos 750
+   ypos 251
+  }
+  Dot {
+   name Dot22
+   label " "
+   xpos 784
+   ypos 783
+  }
+push $N1ac3dc00
+  Dot {
+   name Dot9
+   label " "
+   xpos 1444
+   ypos 111
+  }
+set N1ac3c400 [stack 0]
+  Dot {
+   name Dot6
+   label " "
+   xpos 1444
+   ypos 231
+  }
+set N1abffc00 [stack 0]
+  Dot {
+   name Dot8
+   label " "
+   xpos 1664
+   ypos 231
+  }
+set N1abff800 [stack 0]
+  Dot {
+   name Dot13
+   label " "
+   xpos 1884
+   ypos 231
+  }
+  Dot {
+   name Dot12
+   label " "
+   xpos 1884
+   ypos 351
+  }
+set N1abff000 [stack 0]
+  Expression {
+   temp_name0 logx
+   temp_expr0 "(log10( max(b, 5.96046448e-08 )))"
+   temp_name1 knot_coord
+   temp_expr1 "(N_KNOTS_LOW-1) * (logx-log10(parent.TsPointMin.x))/(log10(parent.TsPointMid.x)-log10(parent.TsPointMin.x))"
+   temp_name2 j
+   temp_expr2 int(knot_coord)
+   temp_name3 t
+   temp_expr3 "knot_coord - j"
+   expr0 "j == 0 ? parent.coefsLow.0 : j == 1 ? parent.coefsLow.1 : j == 2 ? parent.coefsLow.2 :j == 3 ? parent.coefsLow.3 : j == 4 ? parent.coefsLow.4 : 0"
+   expr1 "j == 0 ? parent.coefsLow.1 : j == 1 ? parent.coefsLow.2 : j == 2 ? parent.coefsLow.3 :j == 3 ? parent.coefsLow.4 : j == 4 ? parent.coefsLow.4 : 0"
+   expr2 "j == 0 ? parent.coefsLow.2 : j == 1 ? parent.coefsLow.3 : j == 2 ? parent.coefsLow.4 :j == 3 ? parent.coefsLow.4 : j == 4 ? parent.coefsLow.4 : 0"
+   name Expression5
+   xpos 1740
+   ypos 395
+  }
+  ColorMatrix {
+   matrix {
+       {0.5 -1 0.5}
+       {-1 1 0}
+       {0.5 0.5 0}
+     }
+   name ColorMatrix3
+   label "mult_f3_f33( cf, M)"
+   xpos 1740
+   ypos 437
+  }
+push $N1abff000
+  Expression {
+   temp_name0 logx
+   temp_expr0 "(log10( max(b, 5.96046448e-08 )))"
+   temp_name1 knot_coord
+   temp_expr1 "(N_KNOTS_LOW-1) * (logx-log10(parent.TsPointMin.x))/(log10(parent.TsPointMid.x)-log10(parent.TsPointMin.x))"
+   temp_name2 j
+   temp_expr2 int(knot_coord)
+   temp_name3 t
+   temp_expr3 "knot_coord - j"
+   expr0 t*t
+   expr1 t
+   expr2 1
+   expr3 1
+   name Expression6
+   xpos 1850
+   ypos 395
+  }
+  MergeExpression {
+   inputs 2
+   channel0 {rgba.red -rgba.green -rgba.blue none}
+   expr0 0
+   expr1 0
+   expr2 (Ar*Br)+(Ag*Bg)+(Ab*Bb)
+   name dot_f3_f2
+   label "logy = dot_f3_f3( monomials, mult_f3_f33( cf, M))"
+   xpos 1850
+   ypos 437
+  }
+push 0
+push $N1abff800
+  Dot {
+   name Dot11
+   label " "
+   xpos 1664
+   ypos 351
+  }
+set N1abfdc00 [stack 0]
+  Expression {
+   temp_name0 logx
+   temp_expr0 "(log10( max(g, 5.96046448e-08 )))"
+   temp_name1 knot_coord
+   temp_expr1 "(N_KNOTS_LOW-1) * (logx-log10(parent.TsPointMin.x))/(log10(parent.TsPointMid.x)-log10(parent.TsPointMin.x))"
+   temp_name2 j
+   temp_expr2 int(knot_coord)
+   temp_name3 t
+   temp_expr3 "knot_coord - j"
+   expr0 "j == 0 ? parent.coefsLow.0 : j == 1 ? parent.coefsLow.1 : j == 2 ? parent.coefsLow.2 :j == 3 ? parent.coefsLow.3 : j == 4 ? parent.coefsLow.4 : 0"
+   expr1 "j == 0 ? parent.coefsLow.1 : j == 1 ? parent.coefsLow.2 : j == 2 ? parent.coefsLow.3 :j == 3 ? parent.coefsLow.4 : j == 4 ? parent.coefsLow.4 : 0"
+   expr2 "j == 0 ? parent.coefsLow.2 : j == 1 ? parent.coefsLow.3 : j == 2 ? parent.coefsLow.4 :j == 3 ? parent.coefsLow.4 : j == 4 ? parent.coefsLow.4 : 0"
+   name Expression3
+   xpos 1520
+   ypos 395
+  }
+  ColorMatrix {
+   matrix {
+       {0.5 -1 0.5}
+       {-1 1 0}
+       {0.5 0.5 0}
+     }
+   name ColorMatrix1
+   label "mult_f3_f33( cf, M)"
+   xpos 1520
+   ypos 437
+  }
+push $N1abfdc00
+  Expression {
+   temp_name0 logx
+   temp_expr0 "(log10( max(g, 5.96046448e-08 )))"
+   temp_name1 knot_coord
+   temp_expr1 "(N_KNOTS_LOW-1) * (logx-log10(parent.TsPointMin.x))/(log10(parent.TsPointMid.x)-log10(parent.TsPointMin.x))"
+   temp_name2 j
+   temp_expr2 int(knot_coord)
+   temp_name3 t
+   temp_expr3 "knot_coord - j"
+   expr0 t*t
+   expr1 t
+   expr2 1
+   expr3 1
+   name Expression4
+   xpos 1630
+   ypos 395
+  }
+  MergeExpression {
+   inputs 2
+   channel0 {rgba.red -rgba.green -rgba.blue none}
+   expr0 0
+   expr1 (Ar*Br)+(Ag*Bg)+(Ab*Bb)
+   expr2 0
+   name dot_f3_f7
+   label "logy = dot_f3_f3( monomials, mult_f3_f33( cf, M))"
+   xpos 1630
+   ypos 437
+  }
+push $N1abffc00
+  Dot {
+   name Dot10
+   label " "
+   xpos 1444
+   ypos 351
+  }
+set N1abfc800 [stack 0]
+  Expression {
+   temp_name0 logx
+   temp_expr0 "(log10( max(r, 5.96046448e-08 )))"
+   temp_name1 knot_coord
+   temp_expr1 "(N_KNOTS_LOW-1) * (logx-log10(parent.TsPointMin.x))/(log10(parent.TsPointMid.x)-log10(parent.TsPointMin.x))"
+   temp_name2 j
+   temp_expr2 int(knot_coord)
+   temp_name3 t
+   temp_expr3 "knot_coord - j"
+   expr0 "j == 0 ? parent.coefsLow.0 : j == 1 ? parent.coefsLow.1 : j == 2 ? parent.coefsLow.2 :j == 3 ? parent.coefsLow.3 : j == 4 ? parent.coefsLow.4 : 0"
+   expr1 "j == 0 ? parent.coefsLow.1 : j == 1 ? parent.coefsLow.2 : j == 2 ? parent.coefsLow.3 :j == 3 ? parent.coefsLow.4 : j == 4 ? parent.coefsLow.4 : 0"
+   expr2 "j == 0 ? parent.coefsLow.2 : j == 1 ? parent.coefsLow.3 : j == 2 ? parent.coefsLow.4 :j == 3 ? parent.coefsLow.4 : j == 4 ? parent.coefsLow.4 : 0"
+   name Expression1
+   xpos 1300
+   ypos 395
+  }
+  ColorMatrix {
+   matrix {
+       {0.5 -1 0.5}
+       {-1 1 0}
+       {0.5 0.5 0}
+     }
+   name ColorMatrix2
+   label "mult_f3_f33( cf, M)"
+   xpos 1300
+   ypos 437
+  }
+push $N1abfc800
+  Expression {
+   temp_name0 logx
+   temp_expr0 "(log10( max(r, 5.96046448e-08 )))"
+   temp_name1 knot_coord
+   temp_expr1 "(N_KNOTS_LOW-1) * (logx-log10(parent.TsPointMin.x))/(log10(parent.TsPointMid.x)-log10(parent.TsPointMin.x))"
+   temp_name2 j
+   temp_expr2 int(knot_coord)
+   temp_name3 t
+   temp_expr3 "knot_coord - j"
+   expr0 t*t
+   expr1 t
+   expr2 1
+   expr3 1
+   name Expression2
+   xpos 1410
+   ypos 395
+  }
+  MergeExpression {
+   inputs 2
+   channel0 {rgba.red -rgba.green -rgba.blue none}
+   expr0 (Ar*Br)+(Ag*Bg)+(Ab*Bb)
+   expr1 0
+   expr2 0
+   name dot_f3_f1
+   label "logy = dot_f3_f3( monomials, mult_f3_f33( cf, M))"
+   xpos 1410
+   ypos 437
+  }
+  Merge2 {
+   inputs 3+1
+   operation plus
+   bbox B
+   output rgb
+   name Merge1
+   xpos 1630
+   ypos 587
+  }
+  Merge2 {
+   inputs 2
+   operation multiply
+   also_merge all
+   name Multiply1
+   xpos 1630
+   ypos 779
+  }
+  Dot {
+   name Dot28
+   label " "
+   xpos 1664
+   ypos 1215
+  }
+push 0
+push $N1ac3f000
+  Expression {
+   temp_name0 logr
+   temp_expr0 "log10( max(r, 5.96046448e-08 ))"
+   temp_name1 logg
+   temp_expr1 "log10( max(g, 5.96046448e-08 ))"
+   temp_name2 logb
+   temp_expr2 "log10( max(b, 5.96046448e-08 ))"
+   expr0 "( logr >= log10(parent.TsPointMid.x) ) * ( logr < log10(parent.TsPointMax.x) )"
+   expr1 "( logg >= log10(parent.TsPointMid.x) ) * ( logg < log10(parent.TsPointMax.x) )"
+   expr2 "( logb >= log10(parent.TsPointMid.x) ) * ( logb < log10(parent.TsPointMax.x) )"
+   name segment_high
+   xpos 640
+   ypos 251
+  }
+  Dot {
+   name Dot23
+   label " "
+   xpos 674
+   ypos 903
+  }
+push $N1ac3c400
+  Dot {
+   name Dot14
+   label " "
+   xpos 2214
+   ypos 111
+  }
+set N1aba1c00 [stack 0]
+  Dot {
+   name Dot15
+   label " "
+   xpos 2214
+   ypos 231
+  }
+set N1aba1800 [stack 0]
+  Dot {
+   name Dot17
+   label " "
+   xpos 2434
+   ypos 231
+  }
+set N1aba1400 [stack 0]
+  Dot {
+   name Dot20
+   label " "
+   xpos 2654
+   ypos 231
+  }
+  Dot {
+   name Dot19
+   label " "
+   xpos 2654
+   ypos 351
+  }
+set N1aba0c00 [stack 0]
+  Expression {
+   temp_name0 logx
+   temp_expr0 "(log10( max(b, 5.96046448e-08 )))"
+   temp_name1 knot_coord
+   temp_expr1 "(N_KNOTS_HIGH-1) * (logx-log10(parent.TsPointMid.x))/(log10(parent.TsPointMax.x)-log10(parent.TsPointMid.x))"
+   temp_name2 j
+   temp_expr2 int(knot_coord)
+   temp_name3 t
+   temp_expr3 "knot_coord - j"
+   expr0 "j == 0 ? parent.coefsHigh.0 : j == 1 ? parent.coefsHigh.1 : j == 2 ? parent.coefsHigh.2 :j == 3 ? parent.coefsHigh.3 : j == 4 ? parent.coefsHigh.4 : 0"
+   expr1 "j == 0 ? parent.coefsHigh.1 : j == 1 ? parent.coefsHigh.2 : j == 2 ? parent.coefsHigh.3 :j == 3 ? parent.coefsHigh.4 : j == 4 ? parent.coefsHigh.4 : 0"
+   expr2 "j == 0 ? parent.coefsHigh.2 : j == 1 ? parent.coefsHigh.3 : j == 2 ? parent.coefsHigh.4 :j == 3 ? parent.coefsHigh.4 : j == 4 ? parent.coefsHigh.4 : 0"
+   expr3 j
+   name Expression11
+   xpos 2510
+   ypos 395
+  }
+  ColorMatrix {
+   matrix {
+       {0.5 -1 0.5}
+       {-1 1 0}
+       {0.5 0.5 0}
+     }
+   name ColorMatrix6
+   label "mult_f3_f33( cf, M)"
+   xpos 2510
+   ypos 437
+  }
+push $N1aba0c00
+  Expression {
+   temp_name0 logx
+   temp_expr0 "(log10( max(b, 5.96046448e-08 )))"
+   temp_name1 knot_coord
+   temp_expr1 "(N_KNOTS_HIGH-1) * (logx-log10(parent.TsPointMid.x))/(log10(parent.TsPointMax.x)-log10(parent.TsPointMid.x))"
+   temp_name2 j
+   temp_expr2 int(knot_coord)
+   temp_name3 t
+   temp_expr3 "knot_coord - j"
+   expr0 t*t
+   expr1 t
+   expr2 1
+   expr3 1
+   name Expression12
+   xpos 2620
+   ypos 395
+  }
+  MergeExpression {
+   inputs 2
+   channel0 {rgba.red -rgba.green -rgba.blue none}
+   expr0 0
+   expr1 0
+   expr2 (Ar*Br)+(Ag*Bg)+(Ab*Bb)
+   name dot_f3_f6
+   label "logy = dot_f3_f3( monomials, mult_f3_f33( cf, M))"
+   xpos 2620
+   ypos 437
+  }
+push 0
+push $N1aba1400
+  Dot {
+   name Dot18
+   label " "
+   xpos 2434
+   ypos 351
+  }
+set N1ab43400 [stack 0]
+  Expression {
+   temp_name0 logx
+   temp_expr0 "(log10( max(g, 5.96046448e-08 )))"
+   temp_name1 knot_coord
+   temp_expr1 "(N_KNOTS_HIGH-1) * (logx-log10(parent.TsPointMid.x))/(log10(parent.TsPointMax.x)-log10(parent.TsPointMid.x))"
+   temp_name2 j
+   temp_expr2 int(knot_coord)
+   temp_name3 t
+   temp_expr3 "knot_coord - j"
+   expr0 "j == 0 ? parent.coefsHigh.0 : j == 1 ? parent.coefsHigh.1 : j == 2 ? parent.coefsHigh.2 :j == 3 ? parent.coefsHigh.3 : j == 4 ? parent.coefsHigh.4 : 0"
+   expr1 "j == 0 ? parent.coefsHigh.1 : j == 1 ? parent.coefsHigh.2 : j == 2 ? parent.coefsHigh.3 :j == 3 ? parent.coefsHigh.4 : j == 4 ? parent.coefsHigh.4 : 0"
+   expr2 "j == 0 ? parent.coefsHigh.2 : j == 1 ? parent.coefsHigh.3 : j == 2 ? parent.coefsHigh.4 :j == 3 ? parent.coefsHigh.4 : j == 4 ? parent.coefsHigh.4 : 0"
+   expr3 j
+   name Expression9
+   xpos 2290
+   ypos 395
+  }
+  ColorMatrix {
+   matrix {
+       {0.5 -1 0.5}
+       {-1 1 0}
+       {0.5 0.5 0}
+     }
+   name ColorMatrix5
+   label "mult_f3_f33( cf, M)"
+   xpos 2290
+   ypos 437
+  }
+push $N1ab43400
+  Expression {
+   temp_name0 logx
+   temp_expr0 "(log10( max(g, 5.96046448e-08 )))"
+   temp_name1 knot_coord
+   temp_expr1 "(N_KNOTS_HIGH-1) * (logx-log10(parent.TsPointMid.x))/(log10(parent.TsPointMax.x)-log10(parent.TsPointMid.x))"
+   temp_name2 j
+   temp_expr2 int(knot_coord)
+   temp_name3 t
+   temp_expr3 "knot_coord - j"
+   expr0 t*t
+   expr1 t
+   expr2 1
+   expr3 1
+   name Expression10
+   xpos 2400
+   ypos 395
+  }
+  MergeExpression {
+   inputs 2
+   channel0 {rgba.red -rgba.green -rgba.blue none}
+   expr0 0
+   expr1 (Ar*Br)+(Ag*Bg)+(Ab*Bb)
+   expr2 0
+   name dot_f3_f5
+   label "logy = dot_f3_f3( monomials, mult_f3_f33( cf, M))"
+   xpos 2400
+   ypos 437
+  }
+push $N1aba1800
+  Dot {
+   name Dot16
+   label " "
+   xpos 2214
+   ypos 351
+  }
+set N1ab42000 [stack 0]
+  Expression {
+   temp_name0 logx
+   temp_expr0 "(log10( max(r, 5.96046448e-08 )))"
+   temp_name1 knot_coord
+   temp_expr1 "(N_KNOTS_HIGH-1) * (logx-log10(parent.TsPointMid.x))/(log10(parent.TsPointMax.x)-log10(parent.TsPointMid.x))"
+   temp_name2 j
+   temp_expr2 int(knot_coord)
+   temp_name3 t
+   temp_expr3 "knot_coord - j"
+   expr0 "j == 0 ? parent.coefsHigh.0 : j == 1 ? parent.coefsHigh.1 : j == 2 ? parent.coefsHigh.2 :j == 3 ? parent.coefsHigh.3 : j == 4 ? parent.coefsHigh.4 : 0"
+   expr1 "j == 0 ? parent.coefsHigh.1 : j == 1 ? parent.coefsHigh.2 : j == 2 ? parent.coefsHigh.3 :j == 3 ? parent.coefsHigh.4 : j == 4 ? parent.coefsHigh.4 : 0"
+   expr2 "j == 0 ? parent.coefsHigh.2 : j == 1 ? parent.coefsHigh.3 : j == 2 ? parent.coefsHigh.4 :j == 3 ? parent.coefsHigh.4 : j == 4 ? parent.coefsHigh.4 : 0"
+   expr3 j
+   name Expression7
+   xpos 2070
+   ypos 395
+  }
+  ColorMatrix {
+   matrix {
+       {0.5 -1 0.5}
+       {-1 1 0}
+       {0.5 0.5 0}
+     }
+   name ColorMatrix4
+   label "mult_f3_f33( cf, M)"
+   xpos 2070
+   ypos 437
+  }
+push $N1ab42000
+  Expression {
+   temp_name0 logx
+   temp_expr0 "(log10( max(r, 5.96046448e-08 )))"
+   temp_name1 knot_coord
+   temp_expr1 "(N_KNOTS_HIGH-1) * (logx-log10(parent.TsPointMid.x))/(log10(parent.TsPointMax.x)-log10(parent.TsPointMid.x))"
+   temp_name2 j
+   temp_expr2 int(knot_coord)
+   temp_name3 t
+   temp_expr3 "knot_coord - j"
+   expr0 t*t
+   expr1 t
+   expr2 1
+   expr3 1
+   name Expression8
+   xpos 2180
+   ypos 395
+  }
+  MergeExpression {
+   inputs 2
+   channel0 {rgba.red -rgba.green -rgba.blue none}
+   expr0 (Ar*Br)+(Ag*Bg)+(Ab*Bb)
+   expr1 0
+   expr2 0
+   name dot_f3_f4
+   label "logy = dot_f3_f3( monomials, mult_f3_f33( cf, M))"
+   xpos 2180
+   ypos 437
+  }
+  Merge2 {
+   inputs 3+1
+   operation plus
+   bbox B
+   output rgb
+   name Merge2
+   xpos 2400
+   ypos 587
+  }
+  Merge2 {
+   inputs 2
+   operation multiply
+   also_merge all
+   name Multiply2
+   xpos 2400
+   ypos 899
+  }
+  Dot {
+   name Dot29
+   label " "
+   xpos 2434
+   ypos 1215
+  }
+push $N1ac3f400
+  Expression {
+   temp_name0 logr
+   temp_expr0 "log10( max(r, 5.96046448e-08 ))"
+   temp_name1 logg
+   temp_expr1 "log10( max(g, 5.96046448e-08 ))"
+   temp_name2 logb
+   temp_expr2 "log10( max(b, 5.96046448e-08 ))"
+   expr0 "logr >= log10(parent.TsPointMax.x) ? 1 : 0"
+   expr1 "logg >= log10(parent.TsPointMax.x) ? 1 : 0"
+   expr2 "logb >= log10(parent.TsPointMax.x) ? 1 : 0"
+   name segment_peak
+   xpos 530
+   ypos 251
+  }
+  Dot {
+   name Dot24
+   label " "
+   xpos 564
+   ypos 1047
+  }
+push $N1aba1c00
+  Dot {
+   name Dot21
+   label " "
+   xpos 2984
+   ypos 111
+  }
+  Expression {
+   temp_name0 logr
+   temp_expr0 "log10( max(r, 5.96046448e-08 ))"
+   temp_name1 logg
+   temp_expr1 "log10( max(g, 5.96046448e-08 ))"
+   temp_name2 logb
+   temp_expr2 "log10( max(b, 5.96046448e-08 ))"
+   channel0 {rgba.red -rgba.green -rgba.blue none}
+   expr0 "logr * parent.TsPointMax.z + ( log10(parent.TsPointMax.y) - parent.TsPointMax.z * log10(parent.TsPointMax.x) )"
+   expr1 "logg * parent.TsPointMax.z + ( log10(parent.TsPointMax.y) - parent.TsPointMax.z * log10(parent.TsPointMax.x) )"
+   expr2 "logb* parent.TsPointMax.z + ( log10(parent.TsPointMax.y) - parent.TsPointMax.z * log10(parent.TsPointMax.x) )"
+   expr3 1
+   name proc_low1
+   label Expression
+   xpos 2950
+   ypos 269
+  }
+  Merge2 {
+   inputs 2
+   operation multiply
+   also_merge all
+   name Multiply4
+   xpos 2950
+   ypos 1043
+  }
+  Dot {
+   name Dot30
+   xpos 2984
+   ypos 1239
+  }
+  Merge2 {
+   inputs 4+1
+   operation plus
+   bbox B
+   output rgb
+   name Merge3
+   xpos 1960
+   ypos 1547
+  }
+  Expression {
+   channel0 {rgba.red -rgba.green -rgba.blue none}
+   expr0 pow(10,r)
+   expr1 pow(10,g)
+   expr2 pow(10,b)
+   name Expression13
+   xpos 1960
+   ypos 1667
+  }
+  Shuffle2 {
+   inputs 2
+   fromInput1 {{0} B A}
+   fromInput2 {{1} B A}
+   in2 rgba
+   mappings "4 rgba.red 0 0 rgba.red 0 0 rgba.green 0 1 rgba.green 0 1 rgba.blue 0 2 rgba.blue 0 2 rgba.alpha 1 3 rgba.alpha 0 3"
+   name Shuffle1
+   label "\[value in]-->\[value out]"
+   note_font "Bitstream Vera Sans"
+   selected true
+   xpos 1960
+   ypos 1925
+  }
+  Output {
+   name Output1
+   xpos 1960
+   ypos 2020
+  }
+ end_group
+ Group {
+  name st2048_2
+  label "Lum to PQ (ZCAM)"
+  xpos -1296
+  ypos -354
+  addUserKnob {20 User}
+  addUserKnob {4 direction M {"Luminance (Cd/sqm) -> ST.2048" "ST.2048 -> Luminance (Cd/sqm)"}}
+  addUserKnob {7 peakLuminance R 0 10000}
+  peakLuminance 10000
+  addUserKnob {26 ""}
+  addUserKnob {26 m2_override_desc l "" +STARTLINE T "ZCAM uses a different exponent (rho) in its PQ function than ST.2084 (m2)"}
+  addUserKnob {7 m2_override R 0 200}
+  m2_override {{"1.7 * 2523 / pow(2,5)"}}
+ }
+  Input {
+   inputs 0
+   name Input1
+   xpos 829
+   ypos 200
+  }
+  Dot {
+   name Dot17
+   xpos 863
+   ypos 240
+  }
+set N1aad1000 [stack 0]
+  Dot {
+   name Dot27
+   xpos 916
+   ypos 240
+  }
+  Expression {
+   temp_name0 V_pr
+   temp_expr0 "pow(r, 1/m_2)"
+   temp_name1 V_pg
+   temp_expr1 "pow(g, 1/m_2)"
+   temp_name2 V_pb
+   temp_expr2 "pow(b, 1/m_2)"
+   expr0 "pow((max(0.0, V_pr - c_1) / (c_2 - c_3 * V_pr)), 1/m_1)*L_p"
+   expr1 "pow((max(0.0, V_pg - c_1) / (c_2 - c_3 * V_pg)), 1/m_1)*L_p"
+   expr2 "pow((max(0.0, V_pb - c_1) / (c_2 - c_3 * V_pb)), 1/m_1)*L_p"
+   channel3 none
+   name from_st2048
+   selected true
+   xpos 882
+   ypos 285
+   addUserKnob {20 User}
+   addUserKnob {7 m_1}
+   m_1 {{"2610 / 4096 * (1 / 4)"}}
+   addUserKnob {7 m_2}
+   m_2 {{parent.m2_override}}
+   addUserKnob {7 c_1}
+   c_1 {{"3424 / 4096"}}
+   addUserKnob {7 c_2}
+   c_2 {{"2413 / 4096 * 32"}}
+   addUserKnob {7 c_3}
+   c_3 {{"2392 / 4096 * 32"}}
+   addUserKnob {7 L_p R 0 10000}
+   L_p {{parent.peakLuminance}}
+  }
+push $N1aad1000
+  Dot {
+   name Dot26
+   xpos 810
+   ypos 240
+  }
+  Expression {
+   temp_name0 Y_pr
+   temp_expr0 "pow(r / L_p, m_1)"
+   temp_name1 Y_pg
+   temp_expr1 "pow(g / L_p, m_1)"
+   temp_name2 Y_pb
+   temp_expr2 "pow(b / L_p, m_1)"
+   expr0 "pow((c_1 + c_2 * Y_pr) / (c_3 * Y_pr + 1), m_2)"
+   expr1 "pow((c_1 + c_2 * Y_pg) / (c_3 * Y_pg + 1), m_2)"
+   expr2 "pow((c_1 + c_2 * Y_pb) / (c_3 * Y_pb + 1), m_2)"
+   channel3 none
+   name to_st2084
+   xpos 776
+   ypos 286
+   addUserKnob {20 User}
+   addUserKnob {7 m_1}
+   m_1 {{"2610 / 4096 * (1 / 4)"}}
+   addUserKnob {7 m_2}
+   m_2 {{parent.m2_override}}
+   addUserKnob {7 c_1}
+   c_1 {{"3424 / 4096"}}
+   addUserKnob {7 c_2}
+   c_2 {{"2413 / 4096 * 32"}}
+   addUserKnob {7 c_3}
+   c_3 {{"2392 / 4096 * 32"}}
+   addUserKnob {7 L_p R 0 10000}
+   L_p {{parent.peakLuminance}}
+  }
+  Switch {
+   inputs 2
+   which {{parent.direction}}
+   name Switch2
+   xpos 835
+   ypos 347
+  }
+  Output {
+   name Output1
+   xpos 835
+   ypos 447
+  }
+ end_group
+ Group {
+  name Group1
+  label "Re-Generate J\nfrom Iz"
+  xpos -1296
+  ypos -318
+  addUserKnob {20 User}
+  addUserKnob {41 referenceWhite -STARTLINE T Colorspace2.illuminant_in}
+  addUserKnob {7 referenceLuminance -STARTLINE R 0 10000}
+  referenceLuminance {{parent.reference_luminance}}
+  addUserKnob {4 viewingConditions M {dark dim average}}
+  addUserKnob {7 backgroundLuminance -STARTLINE R 0 200}
+  backgroundLuminance {{parent.background_luminance}}
+  addUserKnob {6 discountIlluminant +STARTLINE}
+  addUserKnob {20 Factors}
+  addUserKnob {7 F}
+  F {{"\[python (0.8, 0.9, 1.0)\\\[\[numvalue viewingConditions]\\]]"}}
+  addUserKnob {7 F_s}
+  F_s {{"\[python (0.525, 0.59, 0.69)\\\[\[numvalue viewingConditions]\\]]"}}
+  addUserKnob {7 L_A}
+  L_A {{"referenceLuminance * backgroundLuminance / 100"}}
+  addUserKnob {7 F_b}
+  F_b {{sqrt(backgroundLuminance/referenceLuminance)}}
+  addUserKnob {7 F_L}
+  F_L {{"0.171*pow(L_A, 1/3) * (1-exp(-48/9*L_A))"}}
+ }
+  BackdropNode {
+   inputs 0
+   name BackdropNode7
+   tile_color 0x666666ff
+   label "Reference White"
+   note_font_size 20
+   xpos 27
+   ypos -149
+   bdwidth 177
+   bdheight 144
+  }
+  Input {
+   inputs 0
+   name Input
+   xpos -66
+   ypos -264
+  }
+  Dot {
+   name Dot1
+   xpos -32
+   ypos -184
+  }
+set N1aa6e800 [stack 0]
+  Dot {
+   name Dot11
+   xpos 114
+   ypos -184
+  }
+  Shuffle2 {
+   fromInput1 {{0} B}
+   in1 rgb
+   out1 rgb
+   fromInput2 {{0} B}
+   mappings "3 white -1 -1 rgba.red 0 0 white -1 -1 rgba.green 0 1 white -1 -1 rgba.blue 0 2"
+   name Shuffle1
+   xpos 80
+   ypos -98
+  }
+  Colorspace {
+   illuminant_in {{parent.parent.illuminant_in}}
+   colorspace_out CIE-XYZ
+   name Colorspace2
+   xpos 80
+   ypos -76
+  }
+  Expression {
+   temp_name0 gain
+   temp_expr0 parent.referenceLuminance/g
+   expr0 r*gain
+   expr1 g*gain
+   expr2 b*gain
+   name Expression0
+   xpos 80
+   ypos -50
+  }
+  Group {
+   name XYZ_w_to_Izazbz
+   xpos 80
+   ypos -26
+  }
+   Input {
+    inputs 0
+    name Input1
+    xpos 148
+    ypos 197
+   }
+   Expression {
+    temp_name0 cb
+    temp_expr0 1.15
+    temp_name1 cg
+    temp_expr1 0.66
+    expr0 "(cb*r) - ((cb-1)*b)"
+    expr1 "(cg*g) - ((cg-1)*r)"
+    expr2 b
+    name Expression1
+    label "XYZ (D65)\nto\nX'Y'Z (D65)"
+    note_font "Bitstream Vera Sans"
+    xpos 148
+    ypos 237
+   }
+   ColorMatrix {
+    matrix {
+        {0.41478972 0.579999 0.014648}
+        {-0.20151 1.120649 0.0531008}
+        {-0.0166008 0.2648 0.6684799}
+      }
+    name ColorMatrix1
+    label "X'Y'Z (D65)\nto\nLMS"
+    note_font "Bitstream Vera Sans"
+    xpos 148
+    ypos 297
+   }
+   Expression {
+    temp_name0 c1
+    temp_expr0 "3424 / pow(2,12)"
+    temp_name1 c2
+    temp_expr1 "2413 / pow(2,7)"
+    temp_name2 c3
+    temp_expr2 "2392 / pow(2,7)"
+    temp_name3 n
+    temp_expr3 2610/pow(2,14)
+    expr0 "pow( ( c1 + c2 * pow((r/10000),n) ) / ( 1 + c3 * pow((r/10000),n) ), (1.7 * 2523 / pow(2,5)))"
+    expr1 "pow( ( c1 + c2 * pow((g/10000),n) ) / ( 1 + c3 * pow((g/10000),n) ), (1.7 * 2523 / pow(2,5)))"
+    expr2 "pow( ( c1 + c2 * pow((b/10000),n) ) / ( 1 + c3 * pow((b/10000),n) ), (1.7 * 2523 / pow(2,5)))"
+    name Expression2
+    label "LMS\nto\nL'M'S'"
+    note_font "Bitstream Vera Sans"
+    xpos 148
+    ypos 357
+   }
+   ColorMatrix {
+    matrix {
+        {0 {1-epsilon} 0}
+        {3.524 -4.066708 0.542708}
+        {0.199076 1.096799 -1.295875}
+      }
+    name ColorMatrix2
+    label "L'M'S\nto\nIzazbz"
+    note_font "Bitstream Vera Sans"
+    xpos 148
+    ypos 417
+    addUserKnob {20 User}
+    addUserKnob {7 epsilon}
+    epsilon 3.703522621e-11
+   }
+   Output {
+    name Output1
+    xpos 148
+    ypos 517
+   }
+  end_group
+  Dot {
+   name Dot2
+   xpos 114
+   ypos 53
+  }
+push $N1aa6e800
+add_layer {zcam_1d zcam_1d.J zcam_1d.C zcam_1d.h zcam_1d.Q zcam_1d.M zcam_1d.H}
+  MergeExpression {
+   inputs 2
+   temp_name0 Qz
+   temp_expr0 "2700 * pow(Br, (1.6 * parent.F_s) / pow(parent.F_b, 0.12)) * pow(parent.F_s, 2.2) * pow(parent.F_b, 0.5) * pow(parent.F_L, 0.2)"
+   temp_name1 Qzw
+   temp_expr1 "2700 * pow(Ar, (1.6 * parent.F_s) / pow(parent.F_b, 0.12)) * pow(parent.F_s, 2.2) * pow(parent.F_b, 0.5) * pow(parent.F_L, 0.2)"
+   temp_name2 j
+   temp_expr2 100*(Qz/Qzw)
+   channel0 {zcam_1d.J -zcam_1d.C -zcam_1d.h none}
+   expr0 j
+   channel1 {rgba.red -rgba.green -rgba.blue none}
+   expr1 j
+   channel2 none
+   channel3 none
+   name MergeExpression1
+   selected true
+   xpos -66
+   ypos 50
+  }
+  Output {
+   name Output
+   xpos -66
+   ypos 117
+  }
+ end_group
+push $N1aca6c00
+ Shuffle2 {
+  inputs 2
+  fromInput1 {{0} B A}
+  fromInput2 {{1} B A}
+  in2 rgb
+  mappings "4 rgba.green 0 1 rgba.green 0 1 rgba.blue 0 2 rgba.blue 0 2 rgba.alpha 0 3 rgba.alpha 0 3 rgba.red 1 0 rgba.red 0 0"
+  name Shuffle1
+  label "Apply Tonecurve"
+  xpos -1154
+  ypos -312
+ }
+ Dot {
+  name Dot1
+  note_font "Bitstream Vera Sans"
+  xpos -1120
+  ypos -88
+ }
+set N1aa0a800 [stack 0]
+ Dot {
+  name Dot2
+  note_font "Bitstream Vera Sans"
+  xpos -1000
+  ypos -88
+ }
+set N1aa0a400 [stack 0]
+ Dot {
+  name Dot3
+  note_font "Bitstream Vera Sans"
+  xpos -884
+  ypos -88
+ }
+ MergeExpression {
+  inputs 2
+  expr0 Br
+  expr1 Aa(Bb/360*(lookupResolution.b-1),Br/lookupNormJ*lookupResolution.r)
+  expr2 Bb
+  expr3 Br/lookupNormJ*lookupResolution.r
+  name MergeExpression1
+  xpos -918
+  ypos -42
+  addUserKnob {20 User}
+  addUserKnob {18 lookupResolution R 0 1024}
+  lookupResolution {{parent.lut_size_Iz} {parent.lut_size_m} {parent.lut_size_h}}
+  addUserKnob {6 lookupResolution_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {7 lookupNormJ R 0 500}
+  lookupNormJ {{pow(log(parent.ssts_luminance.2)/log(2),1.7)*4.5}}
+  addUserKnob {7 lookupNormM R 0 200}
+  lookupNormM 80
+ }
+set N1aa09c00 [stack 0]
+ Dot {
+  name Dot4
+  note_font "Bitstream Vera Sans"
+  xpos -884
+  ypos 61
+ }
+push $N1aa0a400
+push $N1aa09c00
+ Merge2 {
+  inputs 2
+  operation divide
+  name Merge1
+  xpos -1034
+  ypos -42
+ }
+ Expression {
+  expr0 (r<thr.r||lim.r<1.0001)?r:thr.r+s.r*((r-thr.r)/s.r)/(pow(1+pow((r-thr.r)/s.r,p),1/p))
+  expr1 (g<thr.g||lim.g<1.0001)?g:thr.g+s.g*((g-thr.g)/s.g)/(pow(1+pow((g-thr.g)/s.g,p),1/p))
+  expr2 (b<thr.b||lim.b<1.0001)?b:thr.b+s.b*((b-thr.b)/s.b)/(pow(1+pow((b-thr.b)/s.b,p),1/p))
+  name Compress
+  label Power(P)
+  xpos -1034
+  ypos 2
+  addUserKnob {20 Params_tab l Params}
+  addUserKnob {18 thr}
+  thr {{parent.compression.0}}
+  addUserKnob {6 thr_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {18 lim}
+  lim {{parent.compression.1}}
+  addUserKnob {6 lim_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {18 s}
+  s {{(lim-thr)/pow(pow((1-thr)/(lim-thr),-p)-1,1/p)} {(lim-thr)/pow(pow((1-thr)/(lim-thr),-p)-1,1/p)} {(lim-thr)/pow(pow((1-thr)/(lim-thr),-p)-1,1/p)}}
+  addUserKnob {6 s_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {7 p R 1 5}
+  p {{parent.compression.2}}
+ }
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge2
+  xpos -1034
+  ypos 57
+ }
+push $N1aa0a800
+ Shuffle2 {
+  inputs 2
+  fromInput1 {{0} B A}
+  fromInput2 {{1} B A}
+  in2 rgba
+  mappings "4 rgba.red 0 0 rgba.red 0 0 rgba.blue 0 2 rgba.blue 0 2 rgba.alpha 0 3 rgba.alpha 0 3 rgba.green 1 1 rgba.green 0 1"
+  name Shuffle2
+  label "Apply Compressed\nColourfulness (M)"
+  xpos -1154
+  ypos 45
+ }
+ Group {
+  name ZCAM_JMh_Blink1
+  label "JMh to XYZ"
+  note_font "Bitstream Vera Sans"
+  xpos -1154
+  ypos 192
+  addUserKnob {20 User}
+  addUserKnob {41 referenceWhite T RefWhite.illuminant_in}
+  addUserKnob {7 referenceLuminance -STARTLINE R 0 1000}
+  referenceLuminance {{parent.reference_luminance}}
+  addUserKnob {4 viewingConditions M {dark dim average}}
+  viewingConditions dim
+  addUserKnob {7 backgroundLuminance -STARTLINE R 0 100}
+  backgroundLuminance {{parent.background_luminance}}
+  addUserKnob {6 discountIlluminant +STARTLINE}
+  addUserKnob {6 invert +STARTLINE}
+  invert true
+  addUserKnob {26 Blink}
+  addUserKnob {41 useGPUIfAvailable l "Use GPU if available" T BlinkScript1.useGPUIfAvailable}
+ }
+  BackdropNode {
+   inputs 0
+   name BackdropNode1
+   label "Helper Nodes"
+   note_font "Bitstream Vera Sans"
+   note_font_size 20
+   xpos 991
+   ypos 100
+   bdwidth 146
+   bdheight 250
+  }
+  Input {
+   inputs 0
+   name Input1
+   xpos 828
+   ypos 71
+  }
+  Dot {
+   name Dot1
+   note_font "Bitstream Vera Sans"
+   xpos 862
+   ypos 153
+  }
+set N1a9a3800 [stack 0]
+  Shuffle2 {
+   fromInput1 {{0} B}
+   fromInput2 {{0} B}
+   mappings "4 white -1 -1 rgba.red 0 0 white -1 -1 rgba.green 0 1 white -1 -1 rgba.blue 0 2 white -1 -1 rgba.alpha 0 3"
+   name Shuffle1
+   label "\[value in]-->\[value out]"
+   note_font "Bitstream Vera Sans"
+   xpos 1015
+   ypos 143
+  }
+set N1a9a3400 [stack 0]
+  Colorspace {
+   colorspace_out CIE-XYZ
+   name D65White
+   note_font "Bitstream Vera Sans"
+   xpos 1015
+   ypos 243
+   addUserKnob {20 User}
+   addUserKnob {13 value}
+   value {{colormatrix.0+colormatrix.1+colormatrix.2} {colormatrix.3+colormatrix.4+colormatrix.5} {colormatrix.6+colormatrix.7+colormatrix.8}}
+  }
+push $N1a9a3400
+  Colorspace {
+   illuminant_in {{parent.parent.white}}
+   colorspace_out CIE-XYZ
+   name RefWhite
+   note_font "Bitstream Vera Sans"
+   xpos 1015
+   ypos 216
+   addUserKnob {20 User}
+   addUserKnob {13 value}
+   value {{"\[python nuke.thisNode().knob('colormatrix').getValue(0)\\ +\\ nuke.thisNode().knob('colormatrix').getValue(1)\\ +\\ nuke.thisNode().knob('colormatrix').getValue(2)]"} {"\[python nuke.thisNode().knob('colormatrix').getValue(3) + nuke.thisNode().knob('colormatrix').getValue(4) + nuke.thisNode().knob('colormatrix').getValue(5)]"} {"\[python nuke.thisNode().knob('colormatrix').getValue(6) + nuke.thisNode().knob('colormatrix').getValue(7) + nuke.thisNode().knob('colormatrix').getValue(8)]"}}
+  }
+push $N1a9a3800
+  BlinkScript {
+   inputs 3
+   recompileCount 66
+   ProgramGroup 1
+   KernelDescription "2 \"ZCAM_JMh_Kernel\" iterate pixelWise ac1327942f16c15a4b75f54f652a97dc0f54381ec18fc95d13cdfae2cd779b6b 4 \"src\" Read Point \"refWhite\" Read Point \"d65White\" Read Point \"dst\" Write Point 11 \"direction\" Int 1 AAAAAA== \"referenceLuminance\" Float 1 AAAAAA== \"F\" Float 1 AAAAAA== \"F_s\" Float 1 AAAAAA== \"L_A\" Float 1 AAAAAA== \"F_b\" Float 1 AAAAAA== \"F_L\" Float 1 AAAAAA== \"adaptDegree\" Float 1 AAAAAA== \"CAT02_XYZ_to_LMS\" Float 9 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA \"ZCAM_XYZ_to_LMS\" Float 9 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA \"ZCAM_LMS_to_Izazbz\" Float 9 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 11 \"direction\" 1 1 \"referenceLuminance\" 1 1 \"F\" 1 1 \"F_s\" 1 1 \"L_A\" 1 1 \"F_b\" 1 1 \"F_L\" 1 1 \"adaptDegree\" 1 1 \"CAT02_XYZ_to_LMS\" 9 1 \"ZCAM_XYZ_to_LMS\" 9 1 \"ZCAM_LMS_to_Izazbz\" 9 1 7 \"cb\" Float 1 1 AAAAAA== \"cg\" Float 1 1 AAAAAA== \"c1\" Float 1 1 AAAAAA== \"c2\" Float 1 1 AAAAAA== \"c3\" Float 1 1 AAAAAA== \"eta\" Float 1 1 AAAAAA== \"rho\" Float 1 1 AAAAAA=="
+   kernelSource "\nkernel ZCAM_JMh_Kernel : ImageComputationKernel<ePixelWise>\n\{\n  Image<eRead, eAccessPoint, eEdgeClamped> src; // the input image\n  Image<eRead, eAccessPoint, eEdgeClamped> refWhite; // reference white image\n  Image<eRead, eAccessPoint, eEdgeClamped> d65White; // D65 white image\n  Image<eWrite> dst; // the output image\n\n  param:\n    int direction;\n    float referenceLuminance;\n    float F;\n    float F_s;\n    float L_A;\n    float F_b;\n    float F_L;\n    float adaptDegree;\n    float3x3 CAT02_XYZ_to_LMS;\n    float3x3 ZCAM_XYZ_to_LMS;\n    float3x3 ZCAM_LMS_to_Izazbz;\n\n  local:\n    float cb;\n    float cg;\n    float c1;\n    float c2;\n    float c3;\n    float eta;\n    float rho;\n\n\n  void define()\n  \{\n\n  \}\n\n\n  void init()\n  \{\n    cb  = 1.15f;\n    cg  = 0.66f;\n    c1  = 3424.0f / pow(2.0f,12.0f);\n    c2  = 2413.0f / pow(2.0f, 7.0f);\n    c3  = 2392.0f / pow(2.0f, 7.0f);\n    eta = 2610.0f / pow(2.0f,14.0f);\n    rho = 1.7f * 2523.0f / pow(2.0f,5.0f);\n  \}\n\n\n  float3 vector_dot( float3x3 m, float3 v)\n  \{\n    float3 r = 1.0f;\n    for(int c = 0; c<3; c++)\n    \{\n      r\[c] = m\[c]\[0]*v.x + m\[c]\[1]*v.y + m\[c]\[2]*v.z;\n    \}\n\n    return r;\n  \}\n\n\n  float3 CAT_Zhai2018( float3 XYZ_b, float3 XYZ_wb, float3 XYZ_wd, float D_b, float D_d, float3x3 M)\n  \{\n    float3 XYZ_wo = 100.0f;\n    float3 RGB_b = vector_dot(M, XYZ_b);\n    float3 RGB_wb = vector_dot(M, XYZ_wb);\n    float3 RGB_wd = vector_dot(M, XYZ_wd);\n    float3 RGB_wo = vector_dot(M, XYZ_wo);\n    \n    float3 D_RGB_b = D_b * (XYZ_wb.y / XYZ_wo.y) * (RGB_wo / RGB_wb) + 1 - D_b;\n    float3 D_RGB_d = D_d * (XYZ_wd.y / XYZ_wo.y) * (RGB_wo / RGB_wd) + 1 - D_d;\n    float3 D_RGB = D_RGB_b / D_RGB_d;\n    \n    float3 RGB_d = D_RGB * RGB_b;\n    float3 XYZ_d = vector_dot(M.invert(), RGB_d);\n    \n    return XYZ_d;\n  \}\n\n\n  float3 XYZ_to_Izazbz( float3 XYZD65 )\n  \{\n    float3 XYZpD65 = XYZD65;\n    XYZpD65.x = cb * XYZD65.x - (cb - 1.0f) * XYZD65.z;\n    XYZpD65.y = cg * XYZD65.y - (cg - 1.0f) * XYZD65.x;\n    float3 LMS = vector_dot(ZCAM_XYZ_to_LMS, XYZpD65);\n    float3 LMSp = 0.0f;\n    LMSp.x = pow( ( c1 + c2 * pow((LMS.x/10000.0f),eta) ) / ( 1.0f + c3 * pow((LMS.x/10000.0f),eta) ), rho);\n    LMSp.y = pow( ( c1 + c2 * pow((LMS.y/10000.0f),eta) ) / ( 1.0f + c3 * pow((LMS.y/10000.0f),eta) ), rho);\n    LMSp.z = pow( ( c1 + c2 * pow((LMS.z/10000.0f),eta) ) / ( 1.0f + c3 * pow((LMS.z/10000.0f),eta) ), rho);\n    float3 Izazbz = vector_dot(ZCAM_LMS_to_Izazbz, LMSp);\n    return Izazbz;\n  \}\n\n\n  float degrees( float radians )\n  \{\n    return radians * 180.0f / PI;\n  \}\n\n\n  float radians( float degrees )\n  \{\n    return degrees / 180.0f * PI;\n  \}\n\n\n  float3 Izazbz_to_JMh( float3 Izazbz, float refWhiteIz )\n  \{\n    float3 JMh = 0.0f;\n\n    JMh.z = fmod(degrees(atan2(Izazbz.z,Izazbz.y))+360.0f,360.0f);\n    float ez = 1.015f + cos(radians(89.038f+JMh.z));\n    float Qz = 2700.0f * pow(Izazbz.x, (1.6f * F_s) / pow(F_b, 0.12f)) * pow(F_s, 2.2f) * pow(F_b, 0.5f) * pow(F_L, 0.2f);\n    float Qzw = 2700.0f * pow(refWhiteIz, (1.6f * F_s) / pow(F_b, 0.12f)) * pow(F_s, 2.2f) * pow(F_b, 0.5f) * pow(F_L, 0.2f);\n    JMh.x = 100.0f * (Qz / Qzw);\n    JMh.y = 100.0f * pow((pow(Izazbz.y, 2.0f) + pow(Izazbz.z, 2.0f)), 0.37f) * ((pow(ez, 0.068f) * pow(F_L, 0.2f)) / (pow(F_b, 0.1f) * pow(refWhiteIz, 0.78f)));\n\n    return JMh;\n  \}\n\n\n  float3 JMh_to_Izazbz( float3 JMh, float refWhiteIz)\n  \{\n    float Qzm = pow(F_s, 2.2f) * pow(F_b, 0.5f) * pow(F_L, 0.2f);\n    float Qzw = 2700.0f * pow(refWhiteIz, (1.6f * F_s) / pow(F_b, 0.12f)) * Qzm;\n    float Izp = pow(F_b, 0.12f) / (1.6f * F_s);\n    float Izd = 2700.0f * 100.0f * Qzm;\n    float ez = 1.015f + cos(radians(89.038f+JMh.z));\n    float hzr = radians(JMh.z);\n    float Czp = pow((JMh.y * pow(refWhiteIz, 0.78f) * pow(F_b, 0.1f)) / (100.0f * pow(ez, 0.068f) * pow(F_L, 0.2f)), 50.0f / 37.0f);\n\n    return float3( pow((JMh.x * Qzw) / Izd, Izp), Czp * cos(hzr), Czp * sin(hzr));\n  \}\n\n\n  float3 Izazbz_to_XYZ( float3 Izazbz )\n  \{\n    float3 LMSp = vector_dot(ZCAM_LMS_to_Izazbz.invert(), Izazbz);\n    float3 LMS = 0.0f;\n    LMS.x = 10000.0f*pow((c1-pow(LMSp.x,1.0f/rho)) / (c3*pow(LMSp.x,1.0f/rho)-c2),1.0f/eta);\n    LMS.y = 10000.0f*pow((c1-pow(LMSp.y,1.0f/rho)) / (c3*pow(LMSp.y,1.0f/rho)-c2),1.0f/eta);\n    LMS.z = 10000.0f*pow((c1-pow(LMSp.z,1.0f/rho)) / (c3*pow(LMSp.z,1.0f/rho)-c2),1.0f/eta);\n    float3 XYZpD65 = vector_dot(ZCAM_XYZ_to_LMS.invert(), LMS);\n    float3 XYZD65 = XYZpD65;\n    XYZD65.x = (XYZpD65.x+(cb-1.0f)*XYZpD65.z)/cb;\n    XYZD65.y = (XYZpD65.y+(cg-1.0f)*XYZD65.x)/cg;\n    return XYZD65;\n  \}\n\n\n  float3 XYZ_to_ZCAM_JMh( float3 XYZ, float3 refWhite, float3 d65White )\n  \{\n    float3 refWhiteIzazbz = XYZ_to_Izazbz(refWhite*referenceLuminance/refWhite.y);\n    return Izazbz_to_JMh(XYZ_to_Izazbz(CAT_Zhai2018(XYZ, refWhite, d65White, adaptDegree, adaptDegree, CAT02_XYZ_to_LMS)), refWhiteIzazbz.x);\n  \}\n\n\n  float3 ZCAM_JMh_to_XYZ( float3 JMh, float3 refWhite, float3 d65White )\n  \{\n    float3 refWhiteIzazbz = XYZ_to_Izazbz(refWhite*referenceLuminance/refWhite.y);\n    return CAT_Zhai2018(Izazbz_to_XYZ(JMh_to_Izazbz(JMh, refWhiteIzazbz.x)), d65White, refWhite, adaptDegree, adaptDegree, CAT02_XYZ_to_LMS);\n  \}\n\n\n  void process()\n  \{\n    SampleType(src) input = src();\n    SampleType(refWhite) inputRefWhite = refWhite();\n    SampleType(d65White) inputD65White = d65White();\n\n    float3 output = 0.0f;\n\n    if( direction == 0 )\n    \{\n      output = XYZ_to_ZCAM_JMh(float3(input.x, input.y, input.z), float3(inputRefWhite.x, inputRefWhite.y, inputRefWhite.z), float3(inputD65White.x, inputD65White.y, inputD65White.z));\n    \}\n    else\n    \{\n       output = ZCAM_JMh_to_XYZ(float3(input.x, input.y, input.z), float3(inputRefWhite.x, inputRefWhite.y, inputRefWhite.z), float3(inputD65White.x, inputD65White.y, inputD65White.z));\n    \}\n\n    dst() = float4(output.x, output.y, output.z, input.w);\n  \}\n\};\n"
+   rebuild ""
+   ZCAM_JMh_Kernel_direction {{parent.invert}}
+   ZCAM_JMh_Kernel_referenceLuminance {{parent.referenceLuminance}}
+   ZCAM_JMh_Kernel_F {{"\[python (0.8, 0.9, 1.0)\\\[\[numvalue viewingConditions]\\]]"}}
+   ZCAM_JMh_Kernel_F_s {{"\[python (0.525, 0.59, 0.69)\\\[\[numvalue viewingConditions]\\]]"}}
+   ZCAM_JMh_Kernel_L_A {{"referenceLuminance * backgroundLuminance / 100"}}
+   ZCAM_JMh_Kernel_F_b {{sqrt(backgroundLuminance/referenceLuminance)}}
+   ZCAM_JMh_Kernel_F_L {{"0.171*pow(ZCAM_JMh_Kernel_L_A, 1/3) * (1-exp(-48/9*ZCAM_JMh_Kernel_L_A))"}}
+   ZCAM_JMh_Kernel_adaptDegree {{"parent.discountIlluminant ? 1 : ZCAM_JMh_Kernel_F * (1 - (1 / 3.6) * exp((-ZCAM_JMh_Kernel_L_A - 42) / 92))"}}
+   ZCAM_JMh_Kernel_CAT02_XYZ_to_LMS {
+       {0.7328 0.4296 -0.1624}
+       {-0.7036 1.6975 0.0061}
+       {0.003 0.0136 0.9834}
+     }
+   ZCAM_JMh_Kernel_ZCAM_XYZ_to_LMS {
+       {0.41478972 0.579999 0.014648}
+       {-0.20151 1.120649 0.0531008}
+       {-0.0166008 0.2648 0.6684799}
+     }
+   ZCAM_JMh_Kernel_ZCAM_LMS_to_Izazbz {
+       {0 {1-epsilon} 0}
+       {3.524 -4.066708 0.542708}
+       {0.199076 1.096799 -1.295875}
+     }
+   rebuild_finalise ""
+   name BlinkScript1
+   note_font "Bitstream Vera Sans"
+   selected true
+   xpos 828
+   ypos 221
+   addUserKnob {20 User}
+   addUserKnob {7 epsilon}
+   epsilon 3.703522621e-11
+  }
+  Output {
+   name Output1
+   xpos 828
+   ypos 335
+  }
+ end_group
+ Multiply {
+  channels rgb
+  value 0.01
+  name Multiply5
+  label "Lum to Linear"
+  note_font "Bitstream Vera Sans"
+  xpos -1154
+  ypos 281
+  disable {{Colorspace3.colorspace_out==31}}
+ }
+ Colorspace {
+  colorspace_in CIE-XYZ
+  colorspace_out BT1886
+  name Colorspace3
+  label "XYZ to Output"
+  xpos -1154
+  ypos 319
+ }
+ Output {
+  name Output
+  xpos -1154
+  ypos 357
+ }
+end_group
