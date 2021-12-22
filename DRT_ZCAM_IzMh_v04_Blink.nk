@@ -6,8 +6,8 @@ Group {
  label "\[value colorspace_out]/\[value illuminant_out]/\[value primary_out]\n\[value ssts_luminance.2]Cd/sqm"
  note_font "Bitstream Vera Sans"
  selected true
- xpos 293
- ypos -150
+ xpos 1493
+ ypos -25
  addUserKnob {20 User}
  addUserKnob {26 div_input l Input}
  addUserKnob {41 colorspace_in l colorspace T Colorspace1.colorspace_in}
@@ -49,9 +49,9 @@ Group {
   note_font "Bitstream Vera Sans"
   note_font_size 20
   xpos -777
-  ypos -614
-  bdwidth 230
-  bdheight 747
+  ypos -704
+  bdwidth 237
+  bdheight 931
  }
  BackdropNode {
   inputs 0
@@ -60,7 +60,7 @@ Group {
   note_font "Bitstream Vera Sans"
   note_font_size 20
   xpos -1364
-  ypos -171
+  ypos -76
   bdwidth 577
   bdheight 299
  }
@@ -71,9 +71,9 @@ Group {
   note_font "Bitstream Vera Sans"
   note_font_size 20
   xpos -1366
-  ypos -619
-  bdwidth 580
-  bdheight 441
+  ypos -703
+  bdwidth 576
+  bdheight 620
  }
  BackdropNode {
   inputs 0
@@ -82,7 +82,7 @@ Group {
   note_font "Bitstream Vera Sans"
   note_font_size 20
   xpos -1366
-  ypos -901
+  ypos -983
   bdwidth 822
   bdheight 269
  }
@@ -93,7 +93,7 @@ Group {
   note_font "Bitstream Vera Sans"
   note_font_size 20
   xpos -1363
-  ypos 141
+  ypos 236
   bdwidth 822
   bdheight 269
  }
@@ -104,16 +104,16 @@ Group {
   note_font "Bitstream Vera Sans"
   note_font_size 20
   xpos -1928
-  ypos -615
-  bdwidth 557
-  bdheight 743
+  ypos -699
+  bdwidth 554
+  bdheight 916
  }
  Constant {
   inputs 0
   format "256 256 0 0 256 256 1 square_256"
   name Constant1
-  xpos -712
-  ypos -228
+  xpos -708
+  ypos -133
  }
  Reformat {
   type "to box"
@@ -123,8 +123,8 @@ Group {
   resize distort
   name Reformat1
   label "To Lookup Resolution"
-  xpos -712
-  ypos -156
+  xpos -708
+  ypos -61
  }
  Expression {
   temp_name0 vx
@@ -138,23 +138,22 @@ Group {
   name Expression1
   label "Generate Ramps"
   note_font "Bitstream Vera Sans"
-  xpos -712
-  ypos -118
+  xpos -708
+  ypos -23
  }
  Multiply {
   channels rgb
   value {{MergeExpression1.lookupNormJ} {MergeExpression1.lookupNormM} 1 1}
   name Multiply3
   label "Scale IzMh"
-  selected true
-  xpos -712
-  ypos -80
+  xpos -708
+  ypos 15
  }
  Group {
   name ZCAM_GamutBoundaryBlink1
   note_font "Bitstream Vera Sans"
-  xpos -712
-  ypos -42
+  xpos -708
+  ypos 53
   addUserKnob {20 User}
   addUserKnob {7 boundaryLuminance R 0 1000}
   boundaryLuminance {{parent.ssts_luminance.2}}
@@ -218,7 +217,7 @@ Group {
    xpos 862
    ypos 153
   }
-set Ne562c60 [stack 0]
+set Nc49f4b20 [stack 0]
   Shuffle {
    red white
    green white
@@ -231,7 +230,7 @@ set Ne562c60 [stack 0]
    xpos 1015
    ypos 144
   }
-set Ne567bc0 [stack 0]
+set N1f1a00d0 [stack 0]
   Colorspace {
    colorspace_out CIE-XYZ
    name D65White
@@ -242,7 +241,7 @@ set Ne567bc0 [stack 0]
    addUserKnob {13 value}
    value {{colormatrix.0+colormatrix.1+colormatrix.2} {colormatrix.3+colormatrix.4+colormatrix.5} {colormatrix.6+colormatrix.7+colormatrix.8}}
   }
-push $Ne567bc0
+push $N1f1a00d0
   Colorspace {
    illuminant_in {{parent.parent.white}}
    colorspace_out CIE-XYZ
@@ -254,7 +253,7 @@ push $Ne567bc0
    addUserKnob {13 value}
    value {{"\[python nuke.thisNode().knob('colormatrix').getValue(0)\\ +\\ nuke.thisNode().knob('colormatrix').getValue(1)\\ +\\ nuke.thisNode().knob('colormatrix').getValue(2)]"} {"\[python nuke.thisNode().knob('colormatrix').getValue(3) + nuke.thisNode().knob('colormatrix').getValue(4) + nuke.thisNode().knob('colormatrix').getValue(5)]"} {"\[python nuke.thisNode().knob('colormatrix').getValue(6) + nuke.thisNode().knob('colormatrix').getValue(7) + nuke.thisNode().knob('colormatrix').getValue(8)]"}}
   }
-push $Ne562c60
+push $Nc49f4b20
   BlinkScript {
    inputs 4
    recompileCount 90
@@ -304,7 +303,7 @@ push $Ne562c60
   inputs 0
   name Input
   xpos -1148
-  ypos -853
+  ypos -935
  }
  Clamp {
   channels rgb
@@ -315,7 +314,7 @@ push $Ne562c60
   label "Clamp inf to\n+/-half max"
   note_font "Bitstream Vera Sans"
   xpos -1148
-  ypos -827
+  ypos -909
  }
  Colorspace {
   illuminant_in ACES
@@ -324,7 +323,7 @@ push $Ne562c60
   name Colorspace1
   label "Input -> XYZ"
   xpos -1148
-  ypos -777
+  ypos -859
  }
  Multiply {
   channels rgb
@@ -332,7 +331,7 @@ push $Ne562c60
   name Multiply1
   label "x\[value parent.reference_luminance]\nRel. Exp. to Cd/sqm"
   xpos -1148
-  ypos -736
+  ypos -818
   disable {{"Colorspace1.colorspace_in == 31"}}
  }
  Group {
@@ -340,7 +339,7 @@ push $Ne562c60
   label "XYZ to IzMh"
   note_font "Bitstream Vera Sans"
   xpos -1148
-  ypos -686
+  ypos -768
   addUserKnob {20 User}
   addUserKnob {41 referenceWhite T RefWhite.illuminant_in}
   addUserKnob {7 referenceLuminance -STARTLINE R 0 1000}
@@ -374,7 +373,7 @@ push $Ne562c60
    xpos 862
    ypos 153
   }
-set Nf9b27c0 [stack 0]
+set N11546530 [stack 0]
   Shuffle {
    red white
    green white
@@ -387,7 +386,7 @@ set Nf9b27c0 [stack 0]
    xpos 1015
    ypos 144
   }
-set Nf9b76e0 [stack 0]
+set N115863c0 [stack 0]
   Colorspace {
    colorspace_out CIE-XYZ
    name D65White
@@ -398,7 +397,7 @@ set Nf9b76e0 [stack 0]
    addUserKnob {13 value}
    value {{colormatrix.0+colormatrix.1+colormatrix.2} {colormatrix.3+colormatrix.4+colormatrix.5} {colormatrix.6+colormatrix.7+colormatrix.8}}
   }
-push $Nf9b76e0
+push $N115863c0
   Colorspace {
    illuminant_in {{parent.parent.illuminant_in}}
    colorspace_out CIE-XYZ
@@ -410,7 +409,7 @@ push $Nf9b76e0
    addUserKnob {13 value}
    value {{"\[python nuke.thisNode().knob('colormatrix').getValue(0)\\ +\\ nuke.thisNode().knob('colormatrix').getValue(1)\\ +\\ nuke.thisNode().knob('colormatrix').getValue(2)]"} {"\[python nuke.thisNode().knob('colormatrix').getValue(3) + nuke.thisNode().knob('colormatrix').getValue(4) + nuke.thisNode().knob('colormatrix').getValue(5)]"} {"\[python nuke.thisNode().knob('colormatrix').getValue(6) + nuke.thisNode().knob('colormatrix').getValue(7) + nuke.thisNode().knob('colormatrix').getValue(8)]"}}
   }
-push $Nf9b27c0
+push $N11546530
   BlinkScript {
    inputs 3
    recompileCount 69
@@ -460,21 +459,21 @@ push $Nf9b27c0
   name Dot6
   note_font "Bitstream Vera Sans"
   xpos -1114
-  ypos -547
+  ypos -613
  }
-set Nfa27ef0 [stack 0]
+set N110497b0 [stack 0]
  Dot {
   name Dot5
   note_font "Bitstream Vera Sans"
   xpos -1114
-  ypos -524
+  ypos -563
  }
-set Nfa2cdc0 [stack 0]
+set N1c4454f0 [stack 0]
  Group {
   name st2048_1
   label "PQ (ZCAM) to Lum"
   xpos -1296
-  ypos -531
+  ypos -570
   addUserKnob {20 User}
   addUserKnob {4 direction M {"Luminance (Cd/sqm) -> ST.2048" "ST.2048 -> Luminance (Cd/sqm)"}}
   direction "ST.2048 -> Luminance (Cd/sqm)"
@@ -496,7 +495,7 @@ set Nfa2cdc0 [stack 0]
    xpos 863
    ypos 240
   }
-set Nfa40ca0 [stack 0]
+set Nc918060 [stack 0]
   Dot {
    name Dot27
    xpos 916
@@ -531,7 +530,7 @@ set Nfa40ca0 [stack 0]
    addUserKnob {7 L_p R 0 10000}
    L_p {{parent.peakLuminance}}
   }
-push $Nfa40ca0
+push $Nc918060
   Dot {
    name Dot26
    xpos 810
@@ -580,12 +579,21 @@ push $Nfa40ca0
  end_group
  Multiply {
   channels rgb
+  value 1.028552621
+  name Multiply8
+  label "remove luminance shift\nfrom cone fundamentals matrix"
+  note_font "Bitstream Vera Sans"
+  xpos -1296
+  ypos -538
+ }
+ Multiply {
+  channels rgb
   value {{1/parent.reference_luminance}}
   name Multiply2
   label "1/\[value parent.reference_luminance]\nLum to Exp"
   note_font "Bitstream Vera Sans"
   xpos -1296
-  ypos -493
+  ypos -490
  }
  BlinkScript {
   recompileCount 35
@@ -609,7 +617,7 @@ push $Nfa40ca0
   name SSTS_Blink1
   note_font "Bitstream Vera Sans"
   xpos -1296
-  ypos -443
+  ypos -442
   addUserKnob {20 User}
   addUserKnob {13 luminances}
   luminances {{parent.ssts_luminance.0} {parent.ssts_luminance.1} {parent.ssts_luminance.2}}
@@ -660,19 +668,7 @@ push $Nfa40ca0
   addUserKnob {3 N_KNOTS_HIGH}
   N_KNOTS_HIGH 4
  }
-set Nfa8a500 [stack 0]
- Dot {
-  name Dot9
-  note_font "Bitstream Vera Sans"
-  xpos -1428
-  ypos -433
- }
- Dot {
-  name Dot10
-  note_font "Bitstream Vera Sans"
-  xpos -1428
-  ypos -500
- }
+set N1104e500 [stack 0]
  Add {
   channels rgb
   value {{-parent.ssts_luminance.1}}
@@ -680,7 +676,7 @@ set Nfa8a500 [stack 0]
   label "mids to zero"
   note_font "Bitstream Vera Sans"
   xpos -1569
-  ypos -509
+  ypos -442
  }
  Multiply {
   channels rgb
@@ -689,7 +685,7 @@ set Nfa8a500 [stack 0]
   label "1/\[value parent.ssts_luminance.1]\nnormalise mids"
   note_font "Bitstream Vera Sans"
   xpos -1569
-  ypos -471
+  ypos -404
  }
  Clamp {
   channels rgb
@@ -697,27 +693,36 @@ set Nfa8a500 [stack 0]
   label 0-1
   note_font "Bitstream Vera Sans"
   xpos -1569
-  ypos -421
+  ypos -354
  }
  Dot {
   name Dot14
   note_font "Bitstream Vera Sans"
   xpos -1535
-  ypos -350
+  ypos -268
  }
-push $Nfa27ef0
+push $N110497b0
  Dot {
   name Dot7
   note_font "Bitstream Vera Sans"
   xpos -1791
-  ypos -547
+  ypos -613
  }
-push $Nfa8a500
+push $N1104e500
+ Multiply {
+  channels rgb
+  value 0.9722396415
+  name Multiply9
+  label "re-apply luminance shift\nfrom cone fundamentals matrix"
+  note_font "Bitstream Vera Sans"
+  xpos -1296
+  ypos -406
+ }
  Group {
   name st2048_2
   label "Lum to PQ (ZCAM)"
   xpos -1296
-  ypos -397
+  ypos -358
   addUserKnob {20 User}
   addUserKnob {4 direction M {"Luminance (Cd/sqm) -> ST.2048" "ST.2048 -> Luminance (Cd/sqm)"}}
   addUserKnob {7 peakLuminance R 0 10000}
@@ -738,7 +743,7 @@ push $Nfa8a500
    xpos 863
    ypos 240
   }
-set Nfb02060 [stack 0]
+set N10f6b820 [stack 0]
   Dot {
    name Dot27
    xpos 916
@@ -773,7 +778,7 @@ set Nfb02060 [stack 0]
    addUserKnob {7 L_p R 0 10000}
    L_p {{parent.peakLuminance}}
   }
-push $Nfb02060
+push $N10f6b820
   Dot {
    name Dot26
    xpos 810
@@ -820,7 +825,13 @@ push $Nfb02060
    ypos 447
   }
  end_group
-set Nfaf30a0 [stack 0]
+ Dot {
+  name Dot9
+  note_font "Bitstream Vera Sans"
+  xpos -1262
+  ypos -306
+ }
+set N10beb530 [stack 0]
  Merge2 {
   inputs 2
   operation minus
@@ -828,7 +839,7 @@ set Nfaf30a0 [stack 0]
   label "diff tonescale"
   note_font "Bitstream Vera Sans"
   xpos -1825
-  ypos -397
+  ypos -315
  }
  Merge2 {
   inputs 2
@@ -837,7 +848,7 @@ set Nfaf30a0 [stack 0]
   label "remove toe"
   note_font "Bitstream Vera Sans"
   xpos -1825
-  ypos -359
+  ypos -277
  }
  Multiply {
   channels rgb
@@ -846,15 +857,15 @@ set Nfaf30a0 [stack 0]
   label "desat scale"
   note_font "Bitstream Vera Sans"
   xpos -1825
-  ypos -321
+  ypos -239
  }
  Dot {
   name Dot8
   note_font "Bitstream Vera Sans"
   xpos -1791
-  ypos -271
+  ypos -170
  }
-set Nfb6dc30 [stack 0]
+set N10acc170 [stack 0]
  Multiply {
   channels rgb
   value 0.01
@@ -862,7 +873,7 @@ set Nfb6dc30 [stack 0]
   label "highlight boost scale"
   note_font "Bitstream Vera Sans"
   xpos -1733
-  ypos -281
+  ypos -179
  }
  Shuffle {
   green black
@@ -872,9 +883,9 @@ set Nfb6dc30 [stack 0]
   label "\[value in]-->\[value out]"
   note_font "Bitstream Vera Sans"
   xpos -1623
-  ypos -281
+  ypos -179
  }
-push $Nfaf30a0
+push $N10beb530
  Merge2 {
   inputs 2
   operation plus
@@ -882,13 +893,13 @@ push $Nfaf30a0
   label "boost desat highlights"
   note_font "Bitstream Vera Sans"
   xpos -1296
-  ypos -281
+  ypos -179
  }
  Group {
   name Group1
   label "Re-Generate J\nfrom Iz"
   xpos -1296
-  ypos -230
+  ypos -128
   addUserKnob {20 User}
   addUserKnob {41 referenceWhite -STARTLINE T Colorspace2.illuminant_in}
   addUserKnob {7 referenceLuminance -STARTLINE R 0 10000}
@@ -931,7 +942,7 @@ push $Nfaf30a0
    xpos -32
    ypos -184
   }
-set Nfbb7130 [stack 0]
+set N10f80360 [stack 0]
   Dot {
    name Dot11
    xpos 114
@@ -1047,7 +1058,7 @@ set Nfbb7130 [stack 0]
    xpos 114
    ypos 53
   }
-push $Nfbb7130
+push $N10f80360
 add_layer {zcam_1d zcam_1d.J zcam_1d.C zcam_1d.h zcam_1d.Q zcam_1d.M zcam_1d.H}
   MergeExpression {
    inputs 2
@@ -1073,7 +1084,7 @@ add_layer {zcam_1d zcam_1d.J zcam_1d.C zcam_1d.h zcam_1d.Q zcam_1d.M zcam_1d.H}
    ypos 117
   }
  end_group
-push $Nfa2cdc0
+push $N1c4454f0
  ShuffleCopy {
   inputs 2
   red red
@@ -1081,27 +1092,27 @@ push $Nfa2cdc0
   name ShuffleCopy1
   note_font "Bitstream Vera Sans"
   xpos -1148
-  ypos -221
+  ypos -119
  }
  Dot {
   name Dot1
   note_font "Bitstream Vera Sans"
   xpos -1114
-  ypos -88
+  ypos 7
  }
-set Nfc68f50 [stack 0]
+set N1022a130 [stack 0]
  Dot {
   name Dot2
   note_font "Bitstream Vera Sans"
   xpos -994
-  ypos -88
+  ypos 7
  }
-set Nfc6de40 [stack 0]
+set N10a4f070 [stack 0]
  Dot {
   name Dot3
   note_font "Bitstream Vera Sans"
   xpos -878
-  ypos -88
+  ypos 7
  }
  MergeExpression {
   inputs 2
@@ -1111,7 +1122,7 @@ set Nfc6de40 [stack 0]
   expr3 Br/lookupNormJ*lookupResolution.r
   name MergeExpression1
   xpos -912
-  ypos -42
+  ypos 53
   addUserKnob {20 User}
   addUserKnob {18 lookupResolution R 0 1024}
   lookupResolution {{parent.lut_size_Iz} {parent.lut_size_m} {parent.lut_size_h}}
@@ -1121,21 +1132,21 @@ set Nfc6de40 [stack 0]
   addUserKnob {7 lookupNormM R 0 200}
   lookupNormM 80
  }
-set Nfc77c60 [stack 0]
+set Neb033c0 [stack 0]
  Dot {
   name Dot4
   note_font "Bitstream Vera Sans"
   xpos -878
-  ypos 64
+  ypos 159
  }
-push $Nfc6de40
-push $Nfc77c60
+push $N10a4f070
+push $Neb033c0
  Merge2 {
   inputs 2
   operation divide
   name Merge1
   xpos -1028
-  ypos -42
+  ypos 53
  }
  Expression {
   expr0 (r<thr.r||lim.r<1.0001)?r:thr.r+s.r*((r-thr.r)/s.r)/(pow(1+pow((r-thr.r)/s.r,p),1/p))
@@ -1144,7 +1155,7 @@ push $Nfc77c60
   name Compress
   label Power(P)
   xpos -1028
-  ypos -16
+  ypos 79
   addUserKnob {20 Params_tab l Params}
   addUserKnob {18 thr}
   thr {{parent.compression.0}}
@@ -1158,7 +1169,7 @@ push $Nfc77c60
   addUserKnob {7 p R 1 5}
   p {{parent.compression.2}}
  }
-push $Nfb6dc30
+push $N10acc170
  Shuffle {
   red black
   green red
@@ -1168,7 +1179,7 @@ push $Nfb6dc30
   label "\[value in]-->\[value out]"
   note_font "Bitstream Vera Sans"
   xpos -1825
-  ypos 22
+  ypos 117
  }
  Merge2 {
   inputs 2
@@ -1177,16 +1188,16 @@ push $Nfb6dc30
   label "highlight de-sat"
   note_font "Bitstream Vera Sans"
   xpos -1028
-  ypos 22
+  ypos 117
  }
  Merge2 {
   inputs 2
   operation multiply
   name Merge2
   xpos -1028
-  ypos 60
+  ypos 155
  }
-push $Nfc68f50
+push $N1022a130
  ShuffleCopy {
   inputs 2
   green green
@@ -1195,14 +1206,14 @@ push $Nfc68f50
   label "Apply Compressed\nColourfulness (M)"
   note_font "Bitstream Vera Sans"
   xpos -1148
-  ypos 48
+  ypos 143
  }
  Group {
   name ZCAM_JMh_Blink1
   label "JMh to XYZ"
   note_font "Bitstream Vera Sans"
   xpos -1148
-  ypos 192
+  ypos 287
   addUserKnob {20 User}
   addUserKnob {41 referenceWhite T RefWhite.illuminant_in}
   addUserKnob {7 referenceLuminance -STARTLINE R 0 1000}
@@ -1237,7 +1248,7 @@ push $Nfc68f50
    xpos 862
    ypos 153
   }
-set Nfd05580 [stack 0]
+set N10b0c340 [stack 0]
   Shuffle {
    red white
    green white
@@ -1250,7 +1261,7 @@ set Nfd05580 [stack 0]
    xpos 1015
    ypos 144
   }
-set Nfd0a4a0 [stack 0]
+set N10fc5930 [stack 0]
   Colorspace {
    colorspace_out CIE-XYZ
    name D65White
@@ -1261,7 +1272,7 @@ set Nfd0a4a0 [stack 0]
    addUserKnob {13 value}
    value {{colormatrix.0+colormatrix.1+colormatrix.2} {colormatrix.3+colormatrix.4+colormatrix.5} {colormatrix.6+colormatrix.7+colormatrix.8}}
   }
-push $Nfd0a4a0
+push $N10fc5930
   Colorspace {
    illuminant_in {{parent.parent.white}}
    colorspace_out CIE-XYZ
@@ -1273,7 +1284,7 @@ push $Nfd0a4a0
    addUserKnob {13 value}
    value {{"\[python nuke.thisNode().knob('colormatrix').getValue(0)\\ +\\ nuke.thisNode().knob('colormatrix').getValue(1)\\ +\\ nuke.thisNode().knob('colormatrix').getValue(2)]"} {"\[python nuke.thisNode().knob('colormatrix').getValue(3) + nuke.thisNode().knob('colormatrix').getValue(4) + nuke.thisNode().knob('colormatrix').getValue(5)]"} {"\[python nuke.thisNode().knob('colormatrix').getValue(6) + nuke.thisNode().knob('colormatrix').getValue(7) + nuke.thisNode().knob('colormatrix').getValue(8)]"}}
   }
-push $Nfd05580
+push $N10b0c340
   BlinkScript {
    inputs 3
    recompileCount 66
@@ -1326,7 +1337,7 @@ push $Nfd05580
   label "Lum to Linear"
   note_font "Bitstream Vera Sans"
   xpos -1148
-  ypos 281
+  ypos 376
   disable {{Colorspace3.colorspace_out==31}}
  }
  Colorspace {
@@ -1335,11 +1346,11 @@ push $Nfd05580
   name Colorspace3
   label "XYZ to Output"
   xpos -1148
-  ypos 319
+  ypos 414
  }
  Output {
   name Output
   xpos -1148
-  ypos 357
+  ypos 452
  }
 end_group
