@@ -1,5 +1,5 @@
 
-kernel DRT_ZCAM_v10_Kernel : ImageComputationKernel<ePixelWise>
+kernel DRT_ZCAM_v11_Kernel : ImageComputationKernel<ePixelWise>
 {
   Image<eRead, eAccessPoint, eEdgeClamped> src; // the input image
   Image<eWrite> dst; // the output image
@@ -148,6 +148,8 @@ kernel DRT_ZCAM_v10_Kernel : ImageComputationKernel<ePixelWise>
     // Extra Parameters
     //
 
+    float abneys_abyss;
+
     // Toggle Inverse Transform
     bool invert;
 
@@ -169,11 +171,6 @@ kernel DRT_ZCAM_v10_Kernel : ImageComputationKernel<ePixelWise>
     float zcam_eta;
     float zcam_rho;
     float zcam_luminance_shift;
-    float zcam_viewing_conditions_coeff;
-
-    // CAT vars
-    float cat_adaptDegree;
-
 
     // ST2084 vars
     float st2084_m_1;
@@ -476,7 +473,7 @@ kernel DRT_ZCAM_v10_Kernel : ImageComputationKernel<ePixelWise>
   float3 Izazbz_to_JMh( float3 Izazbz, float refWhiteIz, int viewingConditions )
   {
     float3 JMh = 0.0f;
-    float zcam_F_s = zcam_viewing_conditions_coeff;
+    float zcam_F_s = zcam_viewing_conditions_coeff(viewingConditions);
 
     JMh.z = fmod(degrees(atan2(Izazbz.z,Izazbz.y))+360.0f,360.0f);
     float ez = 1.015f + cos(radians(89.038f+JMh.z));
@@ -493,7 +490,7 @@ kernel DRT_ZCAM_v10_Kernel : ImageComputationKernel<ePixelWise>
   // needs the Iz values of the reference white and the viewing conditions parameters
   float3 JMh_to_Izazbz( float3 JMh, float refWhiteIz, int viewingConditions )
   {
-    float zcam_F_s = zcam_viewing_conditions_coeff;
+    float zcam_F_s = zcam_viewing_conditions_coeff(viewingConditions);
     float Qzm = pow(zcam_F_s, 2.2f) * pow(zcam_F_b, 0.5f) * pow(zcam_F_L, 0.2f);
     float Qzw = 2700.0f * pow(refWhiteIz, (1.6f * zcam_F_s) / pow(zcam_F_b, 0.12f)) * Qzm;
     float Izp = pow(zcam_F_b, 0.12f) / (1.6f * zcam_F_s);
@@ -511,7 +508,7 @@ kernel DRT_ZCAM_v10_Kernel : ImageComputationKernel<ePixelWise>
   float3 XYZ_to_ZCAM_JMh( float3 XYZ, float3 refWhite, float3 d65White, int viewingConditions )
   {
     float3 refWhiteIzazbz = XYZ_to_Izazbz(refWhite*referenceLuminance/refWhite.y);
-    return Izazbz_to_JMh(XYZ_to_Izazbz(apply_CAT(XYZ, refWhite, d65White, catType, cat_adaptDegree)), refWhiteIzazbz.x, viewingConditions);
+    return Izazbz_to_JMh(XYZ_to_Izazbz(apply_CAT(XYZ, refWhite, d65White, catType, adaptDegree(viewingConditions))), refWhiteIzazbz.x, viewingConditions);
   }
 
 
@@ -520,7 +517,7 @@ kernel DRT_ZCAM_v10_Kernel : ImageComputationKernel<ePixelWise>
   float3 ZCAM_JMh_to_XYZ( float3 JMh, float3 refWhite, float3 d65White, int viewingConditions )
   {
     float3 refWhiteIzazbz = XYZ_to_Izazbz(refWhite*referenceLuminance/refWhite.y);
-    return apply_CAT(Izazbz_to_XYZ(JMh_to_Izazbz(JMh, refWhiteIzazbz.x, viewingConditions)), d65White, refWhite, catType, cat_adaptDegree);
+    return apply_CAT(Izazbz_to_XYZ(JMh_to_Izazbz(JMh, refWhiteIzazbz.x, viewingConditions)), d65White, refWhite, catType, adaptDegree(viewingConditions));
   }
 
 
@@ -1266,6 +1263,47 @@ kernel DRT_ZCAM_v10_Kernel : ImageComputationKernel<ePixelWise>
   }
 
 
+  float adaptDegree( int condition )
+  {
+    if( discountIlluminant )
+    {
+      return 1.0f;
+    }
+
+    // default to 'dark' condition
+    float coeff = 0.8f;
+
+    if( condition == 1 )
+    {
+      coeff = 0.9f;
+    }
+    else if( condition == 2 )
+    {
+      coeff = 1.0f;
+    }
+
+    return coeff * (1.0f - (1.0f / 3.6f) * exp((-zcam_L_A - 42.0f) / 92.0f));
+  }
+
+
+  float zcam_viewing_conditions_coeff(int condition)
+  {
+    // default to 'dark' condition
+    float coeff = 0.525f;
+
+    if( condition == 1 )
+    {
+      coeff = 0.59f;
+    }
+    else if( condition == 2 )
+    {
+      coeff = 0.69f;
+    }
+
+    return coeff;
+  }
+
+
   void init()
   {
     HALF_MIN = 0.0000000596046448f;
@@ -1275,30 +1313,6 @@ kernel DRT_ZCAM_v10_Kernel : ImageComputationKernel<ePixelWise>
     zcam_F_b = sqrt(backgroundLuminance/referenceLuminance);
     zcam_F_L = 0.171f*pow(zcam_L_A, 1.0f/3.0f) * (1.0f-exp(-48.0f/9.0f*zcam_L_A));
 
-    if( discountIlluminant )
-    {
-      cat_adaptDegree = 1.0f;
-    }
-    else
-    {
-      float viewingConditionsCoeff = 1.0f;
-
-      if( viewingConditions == 0 )
-      {
-        viewingConditionsCoeff = 0.8f;
-      }
-      else if( viewingConditions == 1 )
-      {
-        viewingConditionsCoeff = 0.9f;
-      }
-      else if( viewingConditions == 2 )
-      {
-        viewingConditionsCoeff = 1.0f;
-      }
-
-      cat_adaptDegree = viewingConditionsCoeff * (1.0f - (1.0f / 3.6f) * exp((-zcam_L_A - 42.0f) / 92.0f));
-    }
-
     zcam_cb  = 1.15f;
     zcam_cg  = 0.66f;
     zcam_c1  = 3424.0f / pow(2.0f,12.0f);
@@ -1307,21 +1321,6 @@ kernel DRT_ZCAM_v10_Kernel : ImageComputationKernel<ePixelWise>
     zcam_eta = 2610.0f / pow(2.0f,14.0f);
     zcam_rho = 1.7f * 2523.0f / pow(2.0f,5.0f);
     zcam_luminance_shift = 1.0f / (-0.20151000f + 1.12064900f + 0.05310080f);
-
-    zcam_viewing_conditions_coeff = 1.0f;
-
-    if( viewingConditions == 0 )
-    {
-      zcam_viewing_conditions_coeff = 0.525f;
-    }
-    else if( viewingConditions == 1 )
-    {
-      zcam_viewing_conditions_coeff = 0.59f;
-    }
-    else if( viewingConditions == 2 )
-    {
-      zcam_viewing_conditions_coeff = 0.69f;
-    }
 
     st2084_m_1=2610.0f / 4096.0f * (1.0f / 4.0f);
     st2084_m_2=2523.0f / 4096.0f * 128.0f;
@@ -1427,6 +1426,19 @@ kernel DRT_ZCAM_v10_Kernel : ImageComputationKernel<ePixelWise>
     XYZ_to_LMS_CAT02.setArray(XYZ_to_LMS_CAT02_data);
     XYZ_to_LMS_ZCAM.setArray(XYZ_to_LMS_ZCAM_data);
     LMS_to_Izazbz.setArray(LMS_to_Izazbz_data);
+
+
+    // apply tweak the XYZ to ZCAM cone fundamentals matrix
+    // to change how blue compresses to cyan or magenta
+
+    float coeff_zm =  XYZ_to_LMS_ZCAM[0][2] * pow(2.0f, abneys_abyss);
+    float coeff_zs =  XYZ_to_LMS_ZCAM[1][2] * pow(2.0f,-abneys_abyss);
+
+
+    XYZ_to_LMS_ZCAM[0][0] = XYZ_to_LMS_ZCAM[0][0] + XYZ_to_LMS_ZCAM[0][2] - coeff_zm;
+    XYZ_to_LMS_ZCAM[0][2] = coeff_zm;
+    XYZ_to_LMS_ZCAM[1][1] = XYZ_to_LMS_ZCAM[1][1] + XYZ_to_LMS_ZCAM[1][2] - coeff_zs;
+    XYZ_to_LMS_ZCAM[1][2] = coeff_zs;
 
 
     // Blink does not seem to support initialising multidimensional arrays
